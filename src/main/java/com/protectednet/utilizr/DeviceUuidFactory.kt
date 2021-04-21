@@ -1,6 +1,7 @@
 package com.protectednet.utilizr
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -97,8 +98,9 @@ class DeviceUuidFactory(val context: Context) {
         }
     }
 
-    fun getLegacyHardwareId(a: Activity?,shouldOverwriteNewHardwareId: Boolean=false): String? {
-        val prefs = context!!.getSharedPreferences(PREFS_FILE, 0)
+    @SuppressLint("HardwareIds")
+    fun getLegacyHardwareId(a: Activity?, shouldOverwriteNewHardwareId: Boolean=false): String? {
+        val prefs = context.getSharedPreferences(PREFS_FILE, 0)
         var id = prefs.getString(PREFS_DEVICE_ID, null)
         var udid: String? = null
         if (id != null && id.isNotEmpty()) {//could be new hardware uuid string
@@ -132,8 +134,8 @@ class DeviceUuidFactory(val context: Context) {
                     )
                 return null
             }
-            udid =
-                (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).deviceId
+//            udid =
+//                (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).deviceId
         }
 
         return udid
