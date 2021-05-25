@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -41,9 +42,13 @@ fun Context.hideKeyboard(view: View) {
     inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
 }
 
-@TargetApi(16)
 fun Context.isWifiOn():Boolean{
-    val connManager = this.getSystemService(Context.CONNECTIVITY_SERVICE)
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) isWifiOnNewer(this) else isWifiOnOld(this)
+}
+
+@TargetApi(16)
+private fun isWifiOnOld(context: Context):Boolean{
+    val connManager = context.getSystemService(Context.CONNECTIVITY_SERVICE)
     return if (connManager is ConnectivityManager) {
         val networkInfo = connManager.activeNetworkInfo
         networkInfo!=null && networkInfo.isConnected && networkInfo.type == ConnectivityManager.TYPE_WIFI
@@ -51,8 +56,8 @@ fun Context.isWifiOn():Boolean{
 }
 
 @TargetApi(23)
-fun Context.isWifiOnNewer():Boolean{
-    val connManager = this.getSystemService(Context.CONNECTIVITY_SERVICE)
+private fun isWifiOnNewer(context: Context):Boolean{
+    val connManager = context.getSystemService(Context.CONNECTIVITY_SERVICE)
     return if (connManager is ConnectivityManager) {
         val networkInfo = connManager.activeNetwork
         val capabilities = connManager.getNetworkCapabilities(connManager.activeNetwork)
