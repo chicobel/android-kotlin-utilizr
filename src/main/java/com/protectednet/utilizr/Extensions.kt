@@ -1,5 +1,6 @@
 package com.protectednet.utilizr
 
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -7,6 +8,8 @@ import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.text.Editable
 import android.text.TextWatcher
@@ -36,6 +39,26 @@ fun Activity.hideKeyboard() {
 fun Context.hideKeyboard(view: View) {
     val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
     inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+}
+
+@TargetApi(16)
+fun Context.isWifiOn():Boolean{
+    val connManager = this.getSystemService(Context.CONNECTIVITY_SERVICE)
+    return if (connManager is ConnectivityManager) {
+        val networkInfo = connManager.activeNetworkInfo
+        networkInfo!=null && networkInfo.isConnected && networkInfo.type == ConnectivityManager.TYPE_WIFI
+    } else false
+}
+
+@TargetApi(23)
+fun Context.isWifiOnNewer():Boolean{
+    val connManager = this.getSystemService(Context.CONNECTIVITY_SERVICE)
+    return if (connManager is ConnectivityManager) {
+        val networkInfo = connManager.activeNetwork
+        val capabilities = connManager.getNetworkCapabilities(connManager.activeNetwork)
+        networkInfo!=null && capabilities !=  null && capabilities.hasTransport(
+            NetworkCapabilities.TRANSPORT_WIFI)
+    } else false
 }
 
 fun Drawable.toBitmap(): Bitmap? {
