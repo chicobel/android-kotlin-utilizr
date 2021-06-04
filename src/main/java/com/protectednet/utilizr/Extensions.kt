@@ -243,6 +243,16 @@ fun Long.toSizeSuffix(): String {
     return resultBuffer.toString()
 }
 
+//View Extensions
+
+fun View.setOnClickListenerWithUiLock(normalClickListener: ()->Unit){
+    this.isEnabled = false
+    this.setOnClickListener {
+        normalClickListener()
+    }
+    this.isEnabled = true
+}
+
 fun View.expand() {
     val v= this
     val matchParentMeasureSpec = makeMeasureSpec((v.parent as View).width, EXACTLY)
