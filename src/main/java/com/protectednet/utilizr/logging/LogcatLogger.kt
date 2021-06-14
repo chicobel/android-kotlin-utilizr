@@ -2,8 +2,10 @@ package com.protectednet.utilizr.logging
 
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import java.io.File
 import java.io.IOException
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
@@ -15,7 +17,6 @@ object LogcatLogger {
 
     /*How often logcat should dump to file*/
     var isLogging = false
-    var context: Context? = null
     lateinit var logDirectory:File
     private var process: Process? = null
     private lateinit var logFile: File
@@ -60,8 +61,14 @@ object LogcatLogger {
             val files = logDirectory.listFiles()
             if (files != null && files.isNotEmpty())
                 for (f in files) {
-                    if (System.currentTimeMillis() - f.lastModified() > 6 * 60 * 60 * 1000)//delete if more than 6 hours old
-                        f.delete()
+//                    if (System.currentTimeMillis() - f.lastModified() > 6 * 60 * 60 * 1000)//delete if more than 6 hours old
+//                        f.delete()
+                    try {
+                        if (f.path != logFile.path)
+                            f.delete()
+                    } catch (e: Exception) {
+                        Log.e("DeleteLog",e.message?:"")
+                    }
                 }
         }
     }
