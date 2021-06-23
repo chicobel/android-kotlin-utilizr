@@ -19,8 +19,8 @@ object LogcatLogger {
     var isLogging = false
     lateinit var logDirectory:File
     private var process: Process? = null
-    private lateinit var logFile: File
-
+    private var logFile: File? = null
+    var flushInitiated =false
     /* Checks if external storage is available for read and write */
     fun isExternalStorageWritable(): Boolean {
         val state = Environment.getExternalStorageState()
@@ -39,38 +39,40 @@ object LogcatLogger {
         logDirectory = File("$appDirectory/$folder")
         val formatter = SimpleDateFormat("dd_MM_yyyy", Locale.getDefault())
         val date = formatter.format(Date(System.currentTimeMillis()))
-
         // create app folder
         if (!appDirectory.exists()) {
             appDirectory.mkdir()
         }
-
         // create log folder
         if (!logDirectory.exists()) {
             logDirectory.mkdir()
         }
-
-
         //do one file per day
         logFile = File(logDirectory.absolutePath, "logcat$date.txt")
-//            if(!logFile.exists())
-//                logFile.createNewFile()
-        thread {
-            if (!logDirectory.exists())
-                return@thread
-            val files = logDirectory.listFiles()
-            if (files != null && files.isNotEmpty())
-                for (f in files) {
-//                    if (System.currentTimeMillis() - f.lastModified() > 6 * 60 * 60 * 1000)//delete if more than 6 hours old
-//                        f.delete()
-                    try {
-                        if (f.path != logFile.path)
-                            f.delete()
-                    } catch (e: Exception) {
-                        Log.e("DeleteLog",e.message?:"")
-                    }
+        flushLogs()
+    }
+
+    /**
+    This method should be called at intervals in-case the logs are heavy and taking up spaces.
+     A 2-hourly interval is advised
+     */
+    fun flushLogs() {//logs can grow quite heave so clear regularly
+        if(logFile == null) return
+        if (!logDirectory.exists())
+            return
+        val files = logDirectory.listFiles()
+        if (files != null && files.isNotEmpty())
+            for (f in files) {
+                try {
+                    if (f.path != logFile?.path
+                        || System.currentTimeMillis() - f.lastModified() > 6 * 60 * 60 * 1000
+                        || f.length() > 10000000L
+                    )
+                        f.delete()
+                } catch (e: Exception) {
+                    Log.e("DeleteLog", e.message ?: "")
                 }
-        }
+            }
     }
 
 
@@ -78,7 +80,7 @@ object LogcatLogger {
         // clear the previous logcat and then write the new one to the file
         try {
             process = Runtime.getRuntime().exec("logcat -c")
-            val command = "logcat -f ${logFile.absolutePath} --pid ${android.os.Process.myPid()} *:D"
+            val command = "logcat -f ${logFile?.absolutePath} --pid ${android.os.Process.myPid()} *:D"
             process = Runtime.getRuntime().exec(command)
             isLogging = true
         } catch (e: IOException) {
