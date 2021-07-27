@@ -94,7 +94,7 @@ class L {
         private var moFileLookup:HashMap<String,String> = hashMapOf()
         private var indexedMoFiles:Boolean=false
         private val debugLanguage:SupportedLanguage= SupportedLanguage("Blank","*****", "blank")
-        var currentLanguage:String= debugLanguage.ietfLanguageTag
+        var currentLanguage:String= "en"
 
         private var mSupportedLanguages:List<SupportedLanguage> = listOf()
 
