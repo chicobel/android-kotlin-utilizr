@@ -53,7 +53,7 @@ object LogcatLogger {
     }
 
     /**
-    This method should be called at intervals in-case the logs are heavy and taking up spaces.
+    This method should be called at intervals in-case the logs are heavy and taking up space.
      A 2-hourly interval is advised
      */
     fun flushLogs() {//logs can grow quite heave so clear regularly
