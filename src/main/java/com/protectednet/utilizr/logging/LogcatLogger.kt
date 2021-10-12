@@ -23,9 +23,6 @@ object LogcatLogger {
     private var logFile: File? = null
     var flushInitiated = false
 
-    // This holds the application ID of the application using this logger.
-    private var appIDOfApplicationUsingThisLogger: String? = null
-
     /* Checks if external storage is available for read and write */
     fun isExternalStorageWritable(): Boolean {
         val state = Environment.getExternalStorageState()
@@ -40,9 +37,8 @@ object LogcatLogger {
 
     fun init(
         filesDir: String,
-        folder: String,
-        appIDOfApplication: String? = null
-    ) { // In order to prevent the modified signature from breaking existing code, the last parameter will be used as an optional with a default value of null.
+        folder: String
+    ) {
 //            val appDirectory = File(Environment.getExternalStorageDirectory().absolutePath)
         val appDirectory = File(filesDir)
         logDirectory = File("$appDirectory/$folder")
@@ -59,9 +55,6 @@ object LogcatLogger {
         //do one file per day
         logFile = File(logDirectory.absolutePath, "logcat$date.txt")
         flushLogs()
-        // later used for filtering by package name in versions below Android Nougat.
-        appIDOfApplicationUsingThisLogger = appIDOfApplication
-
     }
 
     /**
@@ -94,18 +87,12 @@ object LogcatLogger {
             val sdk = Build.VERSION.SDK_INT
             val command =
                 if (sdk < Build.VERSION_CODES.N) { // Versions below Nougat don't support the logcat --pid option. An alternative method has to be used.
-                    if (appIDOfApplicationUsingThisLogger != null) {
-                        """logcat -v threadtime -f ${logFile?.absolutePath} *:D | grep -F "adb shell ps | grep $appIDOfApplicationUsingThisLogger | tr -s [:space:] ' ' | cut -d ' ' -f2'"""" // https://stackoverflow.com/a/9869609
-                    } else { // If the package name is not specified the --pid option won't work anyway. So, just blank the command.
-                        ""
-                    }
+                    "logcat -v threadtime -f ${logFile?.absolutePath} *:D | grep ${android.os.Process.myPid()}" // threadtime option used to make it as close as possible to the logs on newer devices.
                 } else { // Nougat and above support the --pid option
                     "logcat -f ${logFile?.absolutePath} --pid ${android.os.Process.myPid()} *:D"
                 }
-            if (command.isNotBlank()) {
-                process = Runtime.getRuntime().exec(command)
-                isLogging = true
-            }
+            process = Runtime.getRuntime().exec(command)
+            isLogging = true
         } catch (e: IOException) {
             e.printStackTrace()
             isLogging = false
