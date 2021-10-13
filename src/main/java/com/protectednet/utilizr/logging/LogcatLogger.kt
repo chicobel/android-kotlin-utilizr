@@ -1,6 +1,7 @@
 package com.protectednet.utilizr.logging
 
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import android.util.Log
 import java.io.File
@@ -17,10 +18,11 @@ object LogcatLogger {
 
     /*How often logcat should dump to file*/
     var isLogging = false
-    lateinit var logDirectory:File
+    lateinit var logDirectory: File
     private var process: Process? = null
     private var logFile: File? = null
-    var flushInitiated =false
+    var flushInitiated = false
+
     /* Checks if external storage is available for read and write */
     fun isExternalStorageWritable(): Boolean {
         val state = Environment.getExternalStorageState()
@@ -33,7 +35,10 @@ object LogcatLogger {
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
     }
 
-    fun init(filesDir: String, folder: String) {
+    fun init(
+        filesDir: String,
+        folder: String
+    ) {
 //            val appDirectory = File(Environment.getExternalStorageDirectory().absolutePath)
         val appDirectory = File(filesDir)
         logDirectory = File("$appDirectory/$folder")
@@ -57,7 +62,7 @@ object LogcatLogger {
      A 2-hourly interval is advised
      */
     fun flushLogs() {//logs can grow quite heave so clear regularly
-        if(logFile == null) return
+        if (logFile == null) return
         if (!logDirectory.exists())
             return
         val files = logDirectory.listFiles()
@@ -75,12 +80,17 @@ object LogcatLogger {
             }
     }
 
-
     fun start() {
         // clear the previous logcat and then write the new one to the file
         try {
             process = Runtime.getRuntime().exec("logcat -c")
-            val command = "logcat -f ${logFile?.absolutePath} --pid ${android.os.Process.myPid()} *:D"
+            val sdk = Build.VERSION.SDK_INT
+            val command =
+                if (sdk < Build.VERSION_CODES.N) { // Versions below Nougat don't support the logcat --pid option. An alternative method has to be used.
+                    "logcat -v threadtime -f ${logFile?.absolutePath} *:D | grep ${android.os.Process.myPid()}" // threadtime option used to make it as close as possible to the logs on newer devices.
+                } else { // Nougat and above support the --pid option
+                    "logcat -f ${logFile?.absolutePath} --pid ${android.os.Process.myPid()} *:D"
+                }
             process = Runtime.getRuntime().exec(command)
             isLogging = true
         } catch (e: IOException) {
