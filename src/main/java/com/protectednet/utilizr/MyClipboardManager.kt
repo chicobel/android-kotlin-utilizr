@@ -14,10 +14,13 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Exception
 import java.lang.StringBuilder
 
 class MyClipboardManager {
-
+ companion object{
+     const val TAG = "MyClipboardManager"
+ }
     @SuppressLint("NewApi")
     fun writeToClipboard(context: Context, data: String){
         val sdk = Build.VERSION.SDK_INT
@@ -62,9 +65,13 @@ class MyClipboardManager {
                 // note, then
                 // this converts whatever it is to text.
                 if (text == null) {
-                    text = coerceToText(context, item).toString()
+                    try {
+                        text = coerceToText(context, item).toString()
+                    } catch (e: Exception) {
+                        Log.e(TAG, e.message ?: "")
+                    }
                 }
-                return text
+                return text ?: ""
             }
         }
         return ""
