@@ -80,13 +80,13 @@ class MyClipboardManager {
     @SuppressLint("NewApi")
     fun coerceToText(context: Context, item: ClipData.Item): CharSequence {
         // If this Item has an explicit textual value, simply return that.
-        val text: CharSequence = item.getText()
+        val text: CharSequence? = item?.text
         if (text != null) {
             return text
         }
 
         // If this Item has a URI value, try using that.
-        val uri = item.getUri()
+        val uri = item.uri
         if (uri != null) {
 
             // First see if the URI can be opened as a plain text stream
@@ -95,7 +95,7 @@ class MyClipboardManager {
             var stream: FileInputStream? = null
             try {
                 // Ask for a stream of the desired type.
-                val descr: AssetFileDescriptor? = context.getContentResolver()
+                val descr: AssetFileDescriptor? = context.contentResolver
                     .openTypedAssetFileDescriptor(uri, "text/*", null)
                 stream = descr?.createInputStream()
                 val reader = InputStreamReader(
