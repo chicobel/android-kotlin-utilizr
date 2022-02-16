@@ -1,15 +1,14 @@
 package com.protectednet.utilizr.logging
 
-import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.util.Log
+import com.protectednet.utilizr.BuildConfig
 import java.io.File
 import java.io.IOException
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.concurrent.thread
 
 
 object LogcatLogger {
@@ -42,8 +41,7 @@ object LogcatLogger {
 //            val appDirectory = File(Environment.getExternalStorageDirectory().absolutePath)
         val appDirectory = File(filesDir)
         logDirectory = File("$appDirectory/$folder")
-        val formatter = SimpleDateFormat("dd_MM_yyyy", Locale.getDefault())
-        val date = formatter.format(Date(System.currentTimeMillis()))
+
         // create app folder
         if (!appDirectory.exists()) {
             appDirectory.mkdir()
@@ -52,26 +50,36 @@ object LogcatLogger {
         if (!logDirectory.exists()) {
             logDirectory.mkdir()
         }
-        //do one file per day
-        logFile = File(logDirectory.absolutePath, "logcat$date.txt")
+        setLogFileName()
         flushLogs()
     }
+
+    private fun setLogFileName(){
+        val formatter = SimpleDateFormat("dd_MM_yyyy", Locale.getDefault())
+        val date = formatter.format(Date(System.currentTimeMillis()))
+        //do one file per day
+        logFile = File(logDirectory.absolutePath, "logcat$date.txt")
+    }
+
 
     /**
     This method should be called at intervals in-case the logs are heavy and taking up space.
      A 2-hourly interval is advised
      */
-    fun flushLogs() {//logs can grow quite heave so clear regularly
+    fun flushLogs() {//logs can grow quite heavy so clear regularly
         if (logFile == null) return
         if (!logDirectory.exists())
             return
         val files = logDirectory.listFiles()
+        Log.d("flushLogs", "found ${files.size} log files")
+        val fileAgeThreshold = if (BuildConfig.DEBUG) 1 * 60 * 1000L else 6 * 60 * 60 * 1000L
+        val fileSizeThreshold = if (BuildConfig.DEBUG) 400 * 1000L else 10 * 1000 * 1000L
         if (files != null && files.isNotEmpty())
             for (f in files) {
-                try {
-                    if (f.path != logFile?.path
-                        || System.currentTimeMillis() - f.lastModified() > 6 * 60 * 60 * 1000
-                        || f.length() > 10000000L
+                try {//delete the file if..
+                    if (f.path != logFile?.path // file is not today's log file or..
+                        || System.currentTimeMillis() - f.lastModified() > fileAgeThreshold//over 6hrs
+                        || f.length() > fileSizeThreshold //file is too big
                     )
                         f.delete()
                 } catch (e: Exception) {
@@ -81,6 +89,7 @@ object LogcatLogger {
     }
 
     fun start() {
+        setLogFileName()
         // clear the previous logcat and then write the new one to the file
         try {
             process = Runtime.getRuntime().exec("logcat -c")
