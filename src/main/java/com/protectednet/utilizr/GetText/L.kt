@@ -143,6 +143,59 @@ class L {
             return mSupportedLanguages
         }
 
+        private var mSupportedLanguagesSorted:List<SupportedLanguage> = listOf()
+        /**
+         * Provides the supported languages in the ascending order of name. "Blank" language will appear at the very end after everything else is sorted.
+         * This was adapted by copying the code in supportedLanguages above. It is possible to refactor code to eliminate repetition but to avoid the risk of
+         * breaking existing functionality, this was created as a new one.
+         */
+        val supportedLanguagesSorted:List<SupportedLanguage>
+            get() {
+                var supported = mutableListOf<SupportedLanguage>()
+                try {
+                    if (mSupportedLanguagesSorted.isNotEmpty())
+                        return mSupportedLanguagesSorted
+
+                    if (!indexedMoFiles) {
+                        return  mSupportedLanguagesSorted
+                    }
+
+//                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
+                    val allCultures = Locale.getAvailableLocales()
+                    val tmp = hashMapOf<String,Boolean>()
+                    for (culture in allCultures) {
+                        if (!moFileLookup.containsKey(culture.language))
+                            continue
+
+                        if(tmp.containsKey(culture.language))
+                            continue
+                        tmp[culture.language]=true
+                        supported.add(
+                            SupportedLanguage(
+                                culture.displayName,
+                                culture.displayName,
+                                culture.language
+                            )
+                        )
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Failed to get list, defaulting to English only $ex")
+                }
+
+                // We always have English without en-GB.po
+                supported.add(SupportedLanguage("English", "English", "en"))
+
+                supported = supported.sortedBy { it.name }.toMutableList()
+
+                if (BuildConfig.DEBUG) {
+                    // add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
+                    supported.add(debugLanguage)
+                }
+
+                mSupportedLanguagesSorted = supported
+                return mSupportedLanguagesSorted
+            }
+
         @ExperimentalUnsignedTypes
         fun indexMoFile(ietfLanguageTag: String, s: ByteArray) {
             if (lookupDictionary.containsKey(ietfLanguageTag))
