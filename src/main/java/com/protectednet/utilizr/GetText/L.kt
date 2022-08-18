@@ -113,9 +113,11 @@ class L {
                 val allCultures = Locale.getAvailableLocales()
                 val tmp = hashMapOf<String,Boolean>()
                 for (culture in allCultures) {
+                    Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
                     if (!moFileLookup.containsKey(culture.language))
                         continue
 
+                    // TODO
                     if(tmp.containsKey(culture.language))
                         continue
                     tmp[culture.language]=true
@@ -163,17 +165,28 @@ class L {
 //                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
                     val allCultures = Locale.getAvailableLocales()
                     val tmp = hashMapOf<String,Boolean>()
+                    var displayName = ""
                     for (culture in allCultures) {
+                        Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
+
                         if (!moFileLookup.containsKey(culture.language))
                             continue
 
+                        /* It seems the reason for doing this is that there are multiple entries with the same "culture.language" value and
+                          it is only the first one of these that will have a clean language name in the "culture.displayName" without an associated country
+                          shown in brackets. This first entry for a given language code seems to be the main one. e.g. the first entry
+                          for "en" would have something like "Englisch" for culture.displayName but the second entry with the same language code would be something
+                          like "Englisch (Welt)" – note the brackets.
+                          Also, it seems what culture.displayName shows depends on the main locale setup on the device. */
                         if(tmp.containsKey(culture.language))
                             continue
                         tmp[culture.language]=true
+                        displayName = culture.displayName.replaceFirstChar { it.uppercase() } // On some devices the display name is shown all in lower case.
+                        culture
                         supported.add(
                             SupportedLanguage(
-                                culture.displayName,
-                                culture.displayName,
+                                displayName,
+                                displayName,
                                 culture.language
                             )
                         )
