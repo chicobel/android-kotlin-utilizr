@@ -7,9 +7,7 @@ import com.protectednet.utilizr.GetText.Localization.ResourceContext
 import com.protectednet.utilizr.eventBus.RxBus
 import java.util.*
 import kotlin.collections.HashMap
-import java.io.InputStream
 import java.text.MessageFormat
-
 
 interface ITranslatable{
     val english:String
@@ -97,7 +95,6 @@ class L {
         var currentLanguage:String= "en"
 
         private var mSupportedLanguages:List<SupportedLanguage> = listOf()
-
         val supportedLanguages:List<SupportedLanguage>
         get() {
             val supported = mutableListOf<SupportedLanguage>()
@@ -117,7 +114,6 @@ class L {
                     if (!moFileLookup.containsKey(culture.language))
                         continue
 
-                    // TODO
                     if(tmp.containsKey(culture.language))
                         continue
                     tmp[culture.language]=true
@@ -154,40 +150,45 @@ class L {
         val supportedLanguagesSorted:List<SupportedLanguage>
             get() {
                 var supported = mutableListOf<SupportedLanguage>()
+
                 try {
                     if (mSupportedLanguagesSorted.isNotEmpty())
                         return mSupportedLanguagesSorted
 
                     if (!indexedMoFiles) {
-                        return  mSupportedLanguagesSorted
+                        return mSupportedLanguagesSorted
                     }
 
 //                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
-                    val allCultures = Locale.getAvailableLocales()
-                    val tmp = hashMapOf<String,Boolean>()
-                    var displayName = ""
-                    for (culture in allCultures) {
-                        Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
+                    val allInstalledLocales = Locale.getAvailableLocales()
+                    val tmp = hashMapOf<String, Boolean>()
+                    var displayName: String
+                    var mainLocaleOfLanguage: Locale // Used to store the main locale for a given language. e.g. Locale("de", "DE") German language in Germany
+                    for (aLocale in allInstalledLocales) {
+                        //Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
 
-                        if (!moFileLookup.containsKey(culture.language))
+                        if (!moFileLookup.containsKey(aLocale.language))
                             continue
 
                         /* It seems the reason for doing this is that there are multiple entries with the same "culture.language" value and
-                          it is only the first one of these that will have a clean language name in the "culture.displayName" without an associated country
+                          ,in most cases, it is only the first one of these that will have a clean language name in the "culture.displayName" without an associated country
                           shown in brackets. This first entry for a given language code seems to be the main one. e.g. the first entry
                           for "en" would have something like "Englisch" for culture.displayName but the second entry with the same language code would be something
                           like "Englisch (Welt)" – note the brackets.
-                          Also, it seems what culture.displayName shows depends on the main locale setup on the device. */
-                        if(tmp.containsKey(culture.language))
+                          Note the above seems to be true in most cases only. It was found that this didn't work this way on an Android 7.0 API 24 Pixel 2 emulator.
+                          In this one the languages were not all grouped together at all and the ietf tag was not sorted in any particular order either. So, the logic here previously in place resulted
+                          in the country in brackets also to show.
+                          Also, it seems what culture.displayName shows depends on the main locale setup on the device in most cases. */
+                        if (tmp.containsKey(aLocale.language))
                             continue
-                        tmp[culture.language]=true
-                        displayName = culture.displayName.replaceFirstChar { it.uppercase() } // On some devices the display name is shown all in lower case.
-                        culture
+                        tmp[aLocale.language] = true
+                        mainLocaleOfLanguage = Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
+                        displayName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
                         supported.add(
                             SupportedLanguage(
                                 displayName,
                                 displayName,
-                                culture.language
+                                aLocale.language
                             )
                         )
                     }
