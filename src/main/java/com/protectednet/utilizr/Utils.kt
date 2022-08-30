@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import kotlin.math.floor
 
 class Utils {
 
@@ -37,6 +38,15 @@ class Utils {
                     throw sc.ioException()
                 }
             }
+        }
+
+        fun generateRandomPassword(): String {
+            val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            var passWord = ""
+            for (i in 0..31) {
+                passWord += chars[floor(Math.random() * chars.length).toInt()]
+            }
+            return passWord
         }
 
     }
