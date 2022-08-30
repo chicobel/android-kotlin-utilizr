@@ -72,7 +72,7 @@ object LogcatLogger {
             return
         val files = logDirectory.listFiles()
         Log.d("flushLogs", "found ${files.size} log files")
-        val fileAgeThreshold = if (BuildConfig.DEBUG) 1 * 60 * 1000L else 6 * 60 * 60 * 1000L
+        val fileAgeThreshold = if (BuildConfig.DEBUG) 1 * 60 * 1000L else 12 * 60 * 60 * 1000L
         val fileSizeThreshold = if (BuildConfig.DEBUG) 400 * 1000L else 10 * 1000 * 1000L
         if (files != null && files.isNotEmpty())
             for (f in files) {
