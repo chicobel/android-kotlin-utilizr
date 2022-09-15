@@ -21,6 +21,7 @@ import android.view.animation.Animation
 import android.view.animation.Transformation
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import java.math.BigInteger
 import java.net.URI
@@ -137,12 +138,10 @@ fun Bitmap.toGrayScale():Bitmap{
 
 
 fun Context.openUrlInBrowser(url:String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
     if (this !is Activity)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val c = intent.resolveActivityInfo(this.packageManager, intent.flags)
-    if (c != null && c.exported)
-        this.startActivity(intent)
+        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    ContextCompat.startActivity(this,browserIntent,null)
 }
 
 fun Resources.decodeSampledBitmapFromResource(
