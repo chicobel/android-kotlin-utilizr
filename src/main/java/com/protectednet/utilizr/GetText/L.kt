@@ -223,7 +223,9 @@ class L {
             }
         }
 
-
+        /** Had to add the annotation in order to access this method from a Java file.
+        * [See](https://www.baeldung.com/kotlin/companion-objects-in-java) */
+        @JvmStatic
         fun t(T:String, vararg args:Any):String{
             var res: String
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
