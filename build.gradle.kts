@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("com.android.library")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -38,7 +39,12 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    // override activity until appcompat 1.7.x comes out of alpha
+    implementation("androidx.appcompat:appcompat:1.6.1") {
+        exclude("androidx.activity", "activity")
+    }
+    implementation("androidx.activity:activity-ktx:1.7.0")
+
     implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.0")
