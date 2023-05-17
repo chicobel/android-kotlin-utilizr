@@ -39,13 +39,11 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    // override activity until appcompat 1.7.x comes out of alpha
-    implementation("androidx.appcompat:appcompat:1.6.1") {
-        exclude("androidx.activity", "activity")
-    }
-    implementation("androidx.activity:activity-ktx:1.7.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.activity:activity-ktx:1.7.1")
 
-    implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
+    // make it use api to expose as transitive dep to consumers
+    api("io.reactivex.rxjava2:rxkotlin:2.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.0")
 }
