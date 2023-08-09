@@ -210,6 +210,82 @@ class L {
                 return mSupportedLanguagesSorted
             }
 
+        private var mSupportedLanguagesNativeNamesAndEnglishSorted:List<SupportedLanguage> = listOf()
+        /**
+         * Provides the supported languages in the ascending order of name. "Blank" language will appear at the very end after everything else is sorted.
+         * This was adapted by copying the code in supportedLanguages above. It is possible to refactor code to eliminate repetition but to avoid the risk of
+         * breaking existing functionality, this was created as a new one.
+         */
+        val supportedLanguagesNativeNamesAndEnglishSorted:List<SupportedLanguage>
+            get() {
+                var supported = mutableListOf<SupportedLanguage>()
+
+                try {
+                    if (mSupportedLanguagesNativeNamesAndEnglishSorted.isNotEmpty())
+                        return mSupportedLanguagesNativeNamesAndEnglishSorted
+
+                    if (!indexedMoFiles) {
+                        return mSupportedLanguagesNativeNamesAndEnglishSorted
+                    }
+
+//                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
+                    val allInstalledLocales = Locale.getAvailableLocales()
+                    val tmp = hashMapOf<String, Boolean>()
+                    var nativeName: String
+                    var englishName: String
+                    var mainLocaleOfLanguage: Locale // Used to store the main locale for a given language. e.g. Locale("de", "DE") German language in Germany
+                    for (aLocale in allInstalledLocales) {
+                        //Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
+
+                        if (!moFileLookup.containsKey(aLocale.language))
+                            continue
+
+                        /* It seems the reason for doing this is that there are multiple entries with the same "culture.language" value and
+                          ,in most cases, it is only the first one of these that will have a clean language name in the "culture.displayName" without an associated country
+                          shown in brackets. This first entry for a given language code seems to be the main one. e.g. the first entry
+                          for "en" would have something like "Englisch" for culture.displayName but the second entry with the same language code would be something
+                          like "Englisch (Welt)" – note the brackets.
+                          Note the above seems to be true in most cases only. It was found that this didn't work this way on an Android 7.0 API 24 Pixel 2 emulator.
+                          In this one the languages were not all grouped together at all and the ietf tag was not sorted in any particular order either. So, the logic here previously in place resulted
+                          in the country in brackets also to show.
+                          Also, it seems what culture.displayName shows depends on the main locale setup on the device in most cases. */
+                        if (tmp.containsKey(aLocale.language))
+                            continue
+                        tmp[aLocale.language] = true
+
+
+                        mainLocaleOfLanguage = Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
+                        nativeName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
+
+                        englishName = mainLocaleOfLanguage.getDisplayLanguage(Locale("en"))
+
+                        supported.add(
+                            SupportedLanguage(
+                                englishName,
+                                nativeName,
+                                aLocale.language
+                            )
+                        )
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Failed to get list, defaulting to English only $ex")
+                }
+
+                // We always have English without en-GB.po
+                supported.add(SupportedLanguage("English", "English", "en"))
+
+                supported = supported.sortedBy { it.nativeName }.toMutableList() // Note that it is sorted by native name unlike in the other two properties above (supportedLanguagesSorted and supportedLanguages)
+
+                if (BuildConfig.DEBUG) {
+                    // add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
+                    supported.add(debugLanguage)
+                }
+
+                mSupportedLanguagesNativeNamesAndEnglishSorted = supported
+                return mSupportedLanguagesNativeNamesAndEnglishSorted
+            }
+
+
         @ExperimentalUnsignedTypes
         fun indexMoFile(ietfLanguageTag: String, s: ByteArray) {
             if (lookupDictionary.containsKey(ietfLanguageTag))
@@ -406,6 +482,16 @@ class L {
             context = lookupDictionary[ietfLanguageTag]
 
             context?.addCustomTranslation(id, translation)
+        }
+
+        /**
+         * Checks whether the provided language tag is supported by the App.
+         *
+         * @param ietfLanguageTag case sensitive ietf language check if the App supports
+         * @return true if the language tag is supported. 'false' if it is not supported.
+         */
+        fun isLanguageSupportedByApp(ietfLanguageTag: String): Boolean {
+            return supportedLanguagesSorted.any { it.ietfLanguageTag == ietfLanguageTag }
         }
     }
 }
