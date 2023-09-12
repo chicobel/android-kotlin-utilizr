@@ -493,5 +493,34 @@ class L {
         fun isLanguageSupportedByApp(ietfLanguageTag: String): Boolean {
             return supportedLanguagesSorted.any { it.ietfLanguageTag == ietfLanguageTag }
         }
+
+        /**
+         * Given an ieft language code, this function returns a tag compatible with our website.
+         * If it is not supported by our site, "en" is returned as the language tag.
+         * Only the characters before "-" of language tags like en-GB, de-DE are considered when finding a compatible code.
+         *
+         * Main motivation for creating this was because although in Android the language code for Norwegian Nynorsk is "nn", on our website the code was "no"
+         *
+         * When checked on 11 Sep 2023, the following language codes were identified on www.totalav.com
+         * it, en, fr, de, es, nl, no, pt, sv, tr, pl, da
+         * I.e. When the language is changed on the website, it appends one of the above codes to the URL in the example format below:
+         * e.g. https://www.totalav.com?forceLang=de
+         */
+        fun websiteCompatibleLangTag(ietfLanguageTag: String): String {
+
+            val twoLetterLangCodeInAndroid = ietfLanguageTag.substringBefore("-")
+            val codesSupportedOnWebsite =
+                listOf("it", "en", "fr", "de", "es", "nl", "no", "pt", "sv", "tr", "pl", "da")
+
+            val codeToLookup = if (twoLetterLangCodeInAndroid == "nn") {
+                "no"
+            } else {
+                twoLetterLangCodeInAndroid
+            }
+
+            return if (codesSupportedOnWebsite.contains(codeToLookup)) codeToLookup else "en"
+
+        }
+
     }
 }
