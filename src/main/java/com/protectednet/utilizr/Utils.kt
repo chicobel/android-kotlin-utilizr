@@ -5,7 +5,9 @@ import android.os.Build
 import android.text.Html
 import android.text.SpannableString
 import android.text.Spanned
+import android.util.Log
 import java.io.File
+import java.net.NetworkInterface
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -47,6 +49,18 @@ class Utils {
                 passWord += chars[floor(Math.random() * chars.length).toInt()]
             }
             return passWord
+        }
+
+        fun hasNetworkInterfaceName(name:String):Boolean{
+            return try {
+                NetworkInterface.getNetworkInterfaces().asSequence()
+                    .filter { it.isUp }
+                    .map { it.name }
+                    .any { it.contains(name) }
+            } catch (ex: Exception) {
+                Log.d("isVPNTrulyActive", "Network List not received")
+                false
+            }
         }
 
     }
