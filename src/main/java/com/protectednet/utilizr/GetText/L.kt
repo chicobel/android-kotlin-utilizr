@@ -1,6 +1,9 @@
 package com.protectednet.utilizr.GetText
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.os.LocaleListCompat
 import com.protectednet.utilizr.BuildConfig
 import com.protectednet.utilizr.GetText.Localization.DummyResourceContext
 import com.protectednet.utilizr.GetText.Localization.ResourceContext
@@ -487,10 +490,11 @@ class L {
         /**
          * Checks whether the provided language tag is supported by the App.
          *
-         * @param ietfLanguageTag case sensitive ietf language check if the App supports
+         * @param ietfLanguageTag case sensitive ietf language tag to check if the App supports. Must be a two letter code with everything after "-" stripped off.
          * @return true if the language tag is supported. 'false' if it is not supported.
          */
         fun isLanguageSupportedByApp(ietfLanguageTag: String): Boolean {
+            if (ietfLanguageTag.length != 2 && ietfLanguageTag.contains("-")) throw IllegalArgumentException("Supplied language tag must only have two characters and should not have -")
             return supportedLanguagesSorted.any { it.ietfLanguageTag == ietfLanguageTag }
         }
 
@@ -520,6 +524,33 @@ class L {
 
             return if (codesSupportedOnWebsite.contains(codeToLookup)) codeToLookup else "en"
 
+        }
+
+        data class DeviceLanguageWantedInfo(val ietfLanguageTag: String, val displayLanguage: String)
+        /**
+         * TODO revise comment
+         * Given a list of language codes supported by the device, this function returns the first supported language by the App.
+         * Reason for creating this was as follows:
+         * LocaleManagerCompat.getSystemLocales(AvApplication.instance!!.applicationContext)[0] returns two different results in API 33+ and API<33
+         * In API 33, it returns whatever is on top in the order the languages are listed in device settings.
+         * In API<33, if there is a supported language in the list the above line of code returns that language instead of what is on top of the list visually in the system UI.
+         * So the results were inconsistent.
+         * @param ieftCodesList list of ieft codes obtained by calling LocaleManagerCompat.getSystemLocales(AvApplication.instance!!.applicationContext)
+         * @return
+         */
+        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+        fun getInfoOf1stDeviceLangSupportedByApp(deviceSystemLocales: LocaleListCompat): DeviceLanguageWantedInfo? {
+            var ietfLanguageTag = ""
+            var localeInConsideration: Locale
+            for (i in 0 until deviceSystemLocales.size()) {
+                localeInConsideration = deviceSystemLocales.get(i) ?: return null // This shouldn't be null but just in case the unforseen happens
+                ietfLanguageTag = localeInConsideration.toLanguageTag().substringBefore("-")
+                if (isLanguageSupportedByApp(ietfLanguageTag)) {
+                    val displayLanguage = localeInConsideration.getDisplayLanguage(Locale(currentLanguage))  // Otherwise, the device language name doesn't appear in the correct translation.
+                    return DeviceLanguageWantedInfo(ietfLanguageTag, displayLanguage)
+                }
+            }
+            return null
         }
 
     }
