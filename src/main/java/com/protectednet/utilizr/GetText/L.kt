@@ -1,6 +1,9 @@
 package com.protectednet.utilizr.GetText
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.os.LocaleListCompat
 import com.protectednet.utilizr.BuildConfig
 import com.protectednet.utilizr.GetText.Localization.DummyResourceContext
 import com.protectednet.utilizr.GetText.Localization.ResourceContext
@@ -212,11 +215,15 @@ class L {
 
         private var mSupportedLanguagesNativeNamesAndEnglishSorted:List<SupportedLanguage> = listOf()
         /**
-         * Provides the supported languages in the ascending order of name. "Blank" language will appear at the very end after everything else is sorted.
-         * This was adapted by copying the code in supportedLanguages above. It is possible to refactor code to eliminate repetition but to avoid the risk of
+         * Provides a list of the supported languages by the App sorted in the ascending alphabetical order of native names along with their corresponding English names.
+         * "Blank" language will appear at the very end of the list after everything else is sorted.
+         * Full expanded version of the property name: Supported Languages Native and English Names Sorted.
+         * This was adapted by copying the code in the supportedLanguagesSorted property in the same class.
+         * It was perhaps possible to refactor code to eliminate repetition and use the same property but to avoid the risk of
          * breaking existing functionality, this was created as a new one.
+         * Main motivation for creating this was that supportedLanguagesSorted did not provide the native names.
          */
-        val supportedLanguagesNativeNamesAndEnglishSorted:List<SupportedLanguage>
+        val supportedLangsWithNativeAndEnglishNamesSorted:List<SupportedLanguage>
             get() {
                 var supported = mutableListOf<SupportedLanguage>()
 
@@ -228,7 +235,6 @@ class L {
                         return mSupportedLanguagesNativeNamesAndEnglishSorted
                     }
 
-//                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
                     val allInstalledLocales = Locale.getAvailableLocales()
                     val tmp = hashMapOf<String, Boolean>()
                     var nativeName: String
@@ -252,7 +258,6 @@ class L {
                         if (tmp.containsKey(aLocale.language))
                             continue
                         tmp[aLocale.language] = true
-
 
                         mainLocaleOfLanguage = Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
                         nativeName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
@@ -487,10 +492,11 @@ class L {
         /**
          * Checks whether the provided language tag is supported by the App.
          *
-         * @param ietfLanguageTag case sensitive ietf language check if the App supports
+         * @param ietfLanguageTag case sensitive ietf language tag to check if the App supports. Must be a two letter code with everything after "-" stripped off.
          * @return true if the language tag is supported. 'false' if it is not supported.
          */
         fun isLanguageSupportedByApp(ietfLanguageTag: String): Boolean {
+            if (ietfLanguageTag.length != 2 && ietfLanguageTag.contains("-")) throw IllegalArgumentException("Supplied language tag must only have two characters and should not have -")
             return supportedLanguagesSorted.any { it.ietfLanguageTag == ietfLanguageTag }
         }
 
@@ -520,6 +526,32 @@ class L {
 
             return if (codesSupportedOnWebsite.contains(codeToLookup)) codeToLookup else "en"
 
+        }
+
+        data class DeviceLanguageWantedInfo(val ietfLanguageTag: String, val displayLanguage: String)
+        /**
+         * Given a list of language codes supported by the device, this function returns the first supported language by the App.
+         * Reason for creating this was as follows:
+         * LocaleManagerCompat.getSystemLocales(AvApplication.instance!!.applicationContext)[0] returns two different results in API 33+ and API<33
+         * In API 33, it returns whatever is on top when the order the languages are listed in device settings is considered.
+         * In API<33, if there is at least one supported language in the list, the above line of code returns the first such language instead of what is on top of the list visually in the system UI.
+         * This meant the results were inconsistent in API 33+ and API<33.
+         * @param deviceSystemLocales list of locales supported by the device obtained by calling LocaleManagerCompat.getSystemLocales(AvApplication.instance!!.applicationContext)
+         * @return ietf language tag and display language of first matching language wrapped in a data class or null if not a single device language is supported by the App.
+         */
+        @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+        fun getInfoOf1stDeviceLangSupportedByApp(deviceSystemLocales: LocaleListCompat): DeviceLanguageWantedInfo? {
+            var ietfLanguageTag = ""
+            var localeInConsideration: Locale
+            for (i in 0 until deviceSystemLocales.size()) {
+                localeInConsideration = deviceSystemLocales.get(i) ?: return null // This shouldn't be null but just in case the unforeseen happens
+                ietfLanguageTag = localeInConsideration.toLanguageTag().substringBefore("-")
+                if (isLanguageSupportedByApp(ietfLanguageTag)) {
+                    val displayLanguage = localeInConsideration.getDisplayLanguage(Locale(currentLanguage))  // Otherwise, the device language name doesn't appear in the correct translation.
+                    return DeviceLanguageWantedInfo(ietfLanguageTag, displayLanguage)
+                }
+            }
+            return null
         }
 
     }
