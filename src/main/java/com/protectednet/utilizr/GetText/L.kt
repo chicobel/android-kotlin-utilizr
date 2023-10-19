@@ -403,8 +403,15 @@ class L {
             return MP(t,tPlural,n,args)
         }
 
+        /**
+         * Note that ietfLanguageTag.toLowerCase(Locale.getDefault()) line was replaced with ietfLanguageTag.lowercase(Locale.ENGLISH) on 17 Oct 2023
+         * as toLowerCase was deprecated and getDefault() could cause bugs as per [this](https://stackoverflow.com/a/11063161) SO post.
+         * Comment added in case this causes any unforeseen issues.
+         * @param ietfLanguageTag
+         */
         fun setLanguage(ietfLanguageTag: String) {
-            val lowerIeft = ietfLanguageTag.toLowerCase(Locale.getDefault())
+            val lowerIeft = ietfLanguageTag.lowercase(Locale.ENGLISH)
+
             if (!indexedMoFiles)
                 return
             preloadLanguage(lowerIeft)
