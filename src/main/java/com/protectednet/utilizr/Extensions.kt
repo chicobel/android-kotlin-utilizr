@@ -2,6 +2,7 @@ package com.protectednet.utilizr
 
 import android.annotation.TargetApi
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
@@ -14,6 +15,7 @@ import android.net.Uri
 import android.os.Build
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.View.MeasureSpec.*
 import android.view.ViewGroup
@@ -138,10 +140,14 @@ fun Bitmap.toGrayScale():Bitmap{
 
 
 fun Context.openUrlInBrowser(url:String) {
-    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-    if (this !is Activity)
-        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    ContextCompat.startActivity(this,browserIntent,null)
+    try {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        if (this !is Activity)
+            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ContextCompat.startActivity(this,browserIntent,null)
+    }catch (activityNotFoundException : ActivityNotFoundException){
+        Log.d("OpenUrlWebView", "Unable to open url ${activityNotFoundException.message}")
+    }
 }
 
 fun Resources.decodeSampledBitmapFromResource(
