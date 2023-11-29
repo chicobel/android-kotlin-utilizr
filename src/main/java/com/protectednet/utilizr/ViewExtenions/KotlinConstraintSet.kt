@@ -44,9 +44,6 @@ class KotlinConstraintSet : ConstraintSet() {
             connect(this, START, end, END, it)
         } ?: connect(this, START, end, END)
 
-
-    //TODO generate other functions depending on your needs
-
     infix fun Int.clear(constraint: Constraints) =
         when (constraint) {
             Constraints.TOP -> clear(this, TOP)
