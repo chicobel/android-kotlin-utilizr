@@ -189,7 +189,7 @@ class L {
                         displayName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
                         supported.add(
                             SupportedLanguage(
-                                displayName,
+                                aLocale.displayName,
                                 displayName,
                                 aLocale.language
                             )
