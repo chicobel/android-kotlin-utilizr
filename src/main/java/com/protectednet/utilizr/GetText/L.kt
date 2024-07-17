@@ -12,6 +12,7 @@ import java.util.*
 import kotlin.collections.HashMap
 import java.text.MessageFormat
 
+
 interface ITranslatable{
     val english:String
     val translation:String
@@ -23,6 +24,11 @@ class LArgsInfo(vararg fa:Any){
 
 class SupportedLanguage(val name:String, val nativeName:String, val ietfLanguageTag:String)
 
+// TODO: change the variable names to have simple letters. 
+
+/**
+ * Not sure what MS stands for. Best guess someone came up with was: Mo Singular
+ */
 class MS (t:String, fa: ()->LArgsInfo?): ITranslatable {
     val T = t
     val formatArgs = fa
@@ -47,6 +53,9 @@ class MS (t:String, fa: ()->LArgsInfo?): ITranslatable {
         }
 }
 
+/**
+ * Not sure what MP stands for. Best guess someone came up with was: Mo Plural.
+ */
 class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslatable {
     private val T = t
     private val TPlural = tplural
@@ -81,9 +90,9 @@ class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslat
                     TPlural
             } else {
                 if (count == 1)
-                    MessageFormat(T).format(lArgs.formatArgs)
+                    L.getFormattedString(T, lArgs.formatArgs) // MessageFormat(T).format(lArgs.formatArgs)
                 else
-                    MessageFormat(TPlural).format(lArgs.formatArgs)
+                    L.getFormattedString(TPlural, lArgs.formatArgs) //MessageFormat(TPlural).format(lArgs.formatArgs)
             }
         }
 }
@@ -315,7 +324,8 @@ class L {
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args)
+                        //res = MessageFormat(res).format(args)
+                        res = getFormattedString(res, args.toList())
                     }
                     return res
                 }
@@ -324,7 +334,8 @@ class L {
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args)
+                //res = MessageFormat(res).format(args)
+                res = getFormattedString(res, args.toList())
             }
             return res
         }
@@ -336,7 +347,8 @@ class L {
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args.toTypedArray())
+                        //res = MessageFormat(res).format(args.toTypedArray())
+                        res = getFormattedString(res, args)
                     }
                     return res
                 }
@@ -345,7 +357,8 @@ class L {
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args.toTypedArray())
+                //res = MessageFormat(res).format(args.toTypedArray())
+                res = getFormattedString(res, args)
             }
             return res
         }
@@ -358,7 +371,8 @@ class L {
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args)
+                        //res = MessageFormat(res).format(args)
+                        res = getFormattedString(res, args.toList())
                     }
                     return res
                 }
@@ -368,7 +382,8 @@ class L {
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args)
+                //res = MessageFormat(res).format(args)
+                res = getFormattedString(res, args.toList())
             }
             return res
         }
@@ -380,7 +395,8 @@ class L {
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args.toTypedArray())
+                        //res = MessageFormat(res).format(args.toTypedArray())
+                        res = getFormattedString(res, args)
                     }
                     return res
                 }
@@ -390,7 +406,8 @@ class L {
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args.toTypedArray())
+                //res = MessageFormat(res).format(args.toTypedArray())
+                res = getFormattedString(res, args)
             }
             return res
         }
@@ -536,6 +553,7 @@ class L {
         }
 
         data class DeviceLanguageWantedInfo(val ietfLanguageTag: String, val displayLanguage: String)
+
         /**
          * Given a list of language codes supported by the device, this function returns the first supported language by the App.
          * Reason for creating this was as follows:
@@ -559,6 +577,73 @@ class L {
                 }
             }
             return null
+        }
+
+        /**
+         * @param pattern  String pattern. e.g. "Only {0} days left for your birthday"
+         * @param args  arguments list passed to replace the place holders in the pattern. e.g. listOf(4)
+         * If the above examples string are passed this should return Only four days left for your birthday
+         */
+        fun getFormattedString(pattern:String, args:List<Any>):String {
+
+            /*val userName = "Alice"
+            val currentDate = Date()
+
+            val messagePattern = "Welcome, {0}! You joined on {1, date, long}."
+            val formattedMessage = MessageFormat.format(messagePattern, userName, currentDate)
+
+            println(formattedMessage)*/
+
+            try {
+                return MessageFormat(pattern, localeForCurrentLanguage()).format(args.toTypedArray())
+            } catch (e: Exception) {
+                Log.d(TAG, "MessageFormat exception for string $pattern. Exception message: ${e.message}" )
+                return pattern // returning the same string passed without allowing the app to crash.
+            }
+
+        }
+
+        /**
+         * For each of the supported languages, we
+         * Values on the right were obtained from the /Users/.../android-adblock/locale/compile.sh file
+         * TODO test that it works for all languages
+         * TODO caching
+         *
+         */
+        fun localeForCurrentLanguage():Locale {
+            return when(currentLanguage) {
+                "en" -> Locale.US
+                "fr" -> Locale("fr_FR")
+                "es" -> Locale("es_ES")
+                "de" -> Locale("de_DE")
+                "it" -> Locale("it_IT")
+                "pt" -> Locale("pt_PT")
+                "nl" -> Locale("nl_NL")
+                "da" -> Locale("da_DK")
+                "pl" -> Locale("pl_PL")
+                "sv" -> Locale("sv_SE")
+                "tr" -> Locale("tr_TR")
+                "nn" -> Locale("nn_NO")
+                "cs" -> Locale("cs_CZ")
+                else -> Locale.US
+            }
+
+            //Locale.Builder().
+       /*
+            fr_FR
+            es_ES
+            de_DE
+            it_IT
+            pt_PT
+            nl_NL
+            da_DK
+            pl_PL
+            sv_SE
+            tr_TR
+            nn_NO
+            cs_CZ*/
+
+
         }
 
     }
