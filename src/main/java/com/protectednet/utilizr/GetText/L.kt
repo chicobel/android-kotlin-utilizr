@@ -92,12 +92,12 @@ class MP(textSingular: String, textPlural: String, c: () -> Int, fa: () -> LArgs
                     L.getFormattedString(
                         t,
                         lArgs.formatArgs
-                    ) // MessageFormat(T).format(lArgs.formatArgs)
+                    )
                 else
                     L.getFormattedString(
                         tPlural,
                         lArgs.formatArgs
-                    ) //MessageFormat(TPlural).format(lArgs.formatArgs)
+                    )
             }
         }
 }
@@ -347,7 +347,6 @@ class L {
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        //res = MessageFormat(res).format(args)
                         res = getFormattedString(res, args.toList())
                     }
                     return res
@@ -357,7 +356,6 @@ class L {
             if (args.isNotEmpty()) {
                 if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                //res = MessageFormat(res).format(args)
                 res = getFormattedString(res, args.toList())
             }
             return res
@@ -371,7 +369,6 @@ class L {
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        //res = MessageFormat(res).format(args.toTypedArray())
                         res = getFormattedString(res, args)
                     }
                     return res
@@ -381,7 +378,6 @@ class L {
             if (args.isNotEmpty()) {
                 if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                //res = MessageFormat(res).format(args.toTypedArray())
                 res = getFormattedString(res, args)
             }
             return res
@@ -399,7 +395,6 @@ class L {
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        //res = MessageFormat(res).format(args)
                         res = getFormattedString(res, args.toList())
                     }
                     return res
@@ -410,7 +405,6 @@ class L {
             if (args.isNotEmpty()) {
                 if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                //res = MessageFormat(res).format(args)
                 res = getFormattedString(res, args.toList())
             }
             return res
@@ -428,7 +422,6 @@ class L {
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        //res = MessageFormat(res).format(args.toTypedArray())
                         res = getFormattedString(res, args)
                     }
                     return res
@@ -439,7 +432,6 @@ class L {
             if (args.isNotEmpty()) {
                 if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                //res = MessageFormat(res).format(args.toTypedArray())
                 res = getFormattedString(res, args)
             }
             return res
