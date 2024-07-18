@@ -307,12 +307,6 @@ class L {
                 return mSupportedLanguagesNativeNamesAndEnglishSorted
             }
 
-       /* init {
-            // Initialised this way to avoid potential issues if, say, the language was set to German and the app is started. If it was set to Locale.US,
-            setMainLocaleForCurrentLanguage()
-        }*/
-
-
         @ExperimentalUnsignedTypes
         fun indexMoFile(ietfLanguageTag: String, s: ByteArray) {
             if (lookupDictionary.containsKey(ietfLanguageTag))
@@ -595,31 +589,21 @@ class L {
         }
 
         /**
-         * @param pattern  String pattern. e.g. "Only {0} days left for your birthday"
+         * @param pattern String pattern. e.g. "Only {0} days left for your birthday"
          * @param args  arguments list passed to replace the place holders in the pattern. e.g. listOf(4)
-         * If the above examples string are passed this should return Only four days left for your birthday
+         * If the above examples string are passed, this should return the following:  Only 4 days left for your birthday
          */
         fun getFormattedString(pattern:String, args:List<Any>):String {
-
-            /*val userName = "Alice"
-            val currentDate = Date()
-
-            val messagePattern = "Welcome, {0}! You joined on {1, date, long}."
-            val formattedMessage = MessageFormat.format(messagePattern, userName, currentDate)
-
-            println(formattedMessage)*/
-
             try {
                 return MessageFormat(pattern, mainLocaleOfCurrentLanguage).format(args.toTypedArray())
             } catch (e: Exception) {
                 Log.d(TAG, "MessageFormat exception for string $pattern. Exception message: ${e.message}" )
                 return pattern // returning the same string passed without allowing the app to crash.
             }
-
         }
 
         /**
-         * Values on the right were obtained from the /Users/.../android-adblock/locale/compile.sh file
+         * Sets a static field in this class to a Locale that best represents the language tag of the currently selected language
          * Motivation for creating this:
          * Imagine we want to display “Your birthday is in 4 days” using L.t(Your birthday is in {0} days", days)
          * In a certain Arabic Locale, it could get displayed as “Your birthday is in ٢ days” as MessageFormat which is used under the bonnet used the default locale of the user's device.
@@ -631,41 +615,8 @@ class L {
                 if (currentLanguage.lowercase(Locale.US) == "blank")
                     Locale.US
                 else
-                    Locale.forLanguageTag(currentLanguage) // Using this method rather than hardcoding to make it easier to maintain when new languages are added.
-            Log.d(TAG, "Language has changed. Current language code = $currentLanguage, Current Locale language tag= ${mainLocaleOfCurrentLanguage.toLanguageTag()}, Current locale country = ${mainLocaleOfCurrentLanguage.country}, Current locale display country = ${mainLocaleOfCurrentLanguage.displayCountry}")
-            /*return when(currentLanguage) {
-                "en" -> Locale.US
-                "fr" -> Locale("fr_FR")
-                "es" -> Locale("es_ES")
-                "de" -> Locale("de_DE")
-                "it" -> Locale("it_IT")
-                "pt" -> Locale("pt_PT")
-                "nl" -> Locale("nl_NL")
-                "da" -> Locale("da_DK")
-                "pl" -> Locale("pl_PL")
-                "sv" -> Locale("sv_SE")
-                "tr" -> Locale("tr_TR")
-                "nn" -> Locale("nn_NO")
-                "cs" -> Locale("cs_CZ")
-                else -> Locale.US
-            }*/
-
-            //Locale.Builder().
-       /*
-            fr_FR
-            es_ES
-            de_DE
-            it_IT
-            pt_PT
-            nl_NL
-            da_DK
-            pl_PL
-            sv_SE
-            tr_TR
-            nn_NO
-            cs_CZ*/
-
-
+                    Locale.forLanguageTag(currentLanguage) // Using this method rather than using hard coded language and country names(e.g. de_DE) to make it easier to maintain when new languages are added.
+            Log.d(TAG, "Language has changed. Current language code = $currentLanguage, Current Locale language tag= ${mainLocaleOfCurrentLanguage.toLanguageTag()}")
         }
 
     }
