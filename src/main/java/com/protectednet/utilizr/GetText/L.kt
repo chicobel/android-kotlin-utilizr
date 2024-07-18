@@ -24,8 +24,6 @@ class LArgsInfo(vararg fa:Any){
 
 class SupportedLanguage(val name:String, val nativeName:String, val ietfLanguageTag:String)
 
-// TODO: change the variable names to have simple letters. 
-
 /**
  * Not sure what MS stands for. Best guess someone came up with was: Mo Singular
  */
