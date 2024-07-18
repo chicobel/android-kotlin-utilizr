@@ -106,6 +106,14 @@ class L {
         private val debugLanguage:SupportedLanguage= SupportedLanguage("Blank","*****", "blank")
         var currentLanguage:String= "en"
 
+        /**
+         * Locale assumed based on the currently selected language.
+         * Even if, say, a language like German is selected from the app and then the app is closed, when the app
+         * is started up, as the language changes from "en" to "de" this will get assigned the correct Locale for de.
+         * check [setMainLocaleForCurrentLanguage] a descriptive explaination for why this was needed.
+         */
+        private var mainLocaleOfCurrentLanguage: Locale = Locale.US
+
         private var mSupportedLanguages:List<SupportedLanguage> = listOf()
         val supportedLanguages:List<SupportedLanguage>
         get() {
@@ -299,6 +307,11 @@ class L {
                 return mSupportedLanguagesNativeNamesAndEnglishSorted
             }
 
+       /* init {
+            // Initialised this way to avoid potential issues if, say, the language was set to German and the app is started. If it was set to Locale.US,
+            setMainLocaleForCurrentLanguage()
+        }*/
+
 
         @ExperimentalUnsignedTypes
         fun indexMoFile(ietfLanguageTag: String, s: ByteArray) {
@@ -437,8 +450,10 @@ class L {
                 changed = true
             currentLanguage = lowerIeft
 
-            if (changed)
+            if (changed) {
                 raiseLocaleChangedEvent()
+                setMainLocaleForCurrentLanguage() // As we are in the class that the language change is made itself, not using a RxBus subscription unnecessarily to do this
+            }
         }
 
         private fun preloadLanguage(ietfLanguageTag:String) {
@@ -595,7 +610,7 @@ class L {
             println(formattedMessage)*/
 
             try {
-                return MessageFormat(pattern, localeForCurrentLanguage()).format(args.toTypedArray())
+                return MessageFormat(pattern, mainLocaleOfCurrentLanguage).format(args.toTypedArray())
             } catch (e: Exception) {
                 Log.d(TAG, "MessageFormat exception for string $pattern. Exception message: ${e.message}" )
                 return pattern // returning the same string passed without allowing the app to crash.
@@ -604,14 +619,21 @@ class L {
         }
 
         /**
-         * For each of the supported languages, we
          * Values on the right were obtained from the /Users/.../android-adblock/locale/compile.sh file
-         * TODO test that it works for all languages
-         * TODO caching
-         *
+         * Motivation for creating this:
+         * Imagine we want to display “Your birthday is in 4 days” using L.t(Your birthday is in {0} days", days)
+         * In a certain Arabic Locale, it could get displayed as “Your birthday is in ٢ days” as MessageFormat which is used under the bonnet used the default locale of the user's device.
+         * In another place in the code, as the above scenario was unforeseen, the app was crashing as well.
+         * Therefore, we now find the main locale of the current language so that MessageFormat can be given an appropriate Locale without being at the mercy of the user's device locale.
          */
-        fun localeForCurrentLanguage():Locale {
-            return when(currentLanguage) {
+        private fun setMainLocaleForCurrentLanguage() {
+            mainLocaleOfCurrentLanguage =
+                if (currentLanguage.lowercase(Locale.US) == "blank")
+                    Locale.US
+                else
+                    Locale.forLanguageTag(currentLanguage) // Using this method rather than hardcoding to make it easier to maintain when new languages are added.
+            Log.d(TAG, "Language has changed. Current language code = $currentLanguage, Current Locale language tag= ${mainLocaleOfCurrentLanguage.toLanguageTag()}, Current locale country = ${mainLocaleOfCurrentLanguage.country}, Current locale display country = ${mainLocaleOfCurrentLanguage.displayCountry}")
+            /*return when(currentLanguage) {
                 "en" -> Locale.US
                 "fr" -> Locale("fr_FR")
                 "es" -> Locale("es_ES")
@@ -626,7 +648,7 @@ class L {
                 "nn" -> Locale("nn_NO")
                 "cs" -> Locale("cs_CZ")
                 else -> Locale.US
-            }
+            }*/
 
             //Locale.Builder().
        /*
