@@ -29,36 +29,36 @@ class SupportedLanguage(val name:String, val nativeName:String, val ietfLanguage
 /**
  * Not sure what MS stands for. Best guess someone came up with was: Mo Singular
  */
-class MS (t:String, fa: ()->LArgsInfo?): ITranslatable {
-    val T = t
+class MS (text:String, fa: ()->LArgsInfo?): ITranslatable {
+    val t = text
     val formatArgs = fa
     override val translation: String
         get() {
             val lArgs = formatArgs.invoke()
-            if (T.isEmpty())
-                return T
+            if (t.isEmpty())
+                return t
             return if (lArgs != null && lArgs.formatArgs.isNotEmpty())
-                L.t(T, lArgs.formatArgs)
+                L.t(t, lArgs.formatArgs)
             else
-                L.t(T)
+                L.t(t)
         }
 
     override val english: String
         get() {
             val lArgs = formatArgs.invoke()
             return if (lArgs != null && lArgs.formatArgs.isNotEmpty())
-                L.t(T, lArgs.formatArgs)
+                L.t(t, lArgs.formatArgs)
             else
-                return T
+                return t
         }
 }
 
 /**
  * Not sure what MP stands for. Best guess someone came up with was: Mo Plural.
  */
-class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslatable {
-    private val T = t
-    private val TPlural = tplural
+class MP(textSingular:String, textPlural:String, c:() -> Int, fa: () -> LArgsInfo?) : ITranslatable {
+    private val t = textSingular
+    private val tPlural = textPlural
     private val counter = c
     private val formatArgs = fa
 
@@ -66,17 +66,17 @@ class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslat
         get() {
             val count = counter.invoke()
 
-            if (T.isEmpty() && count == 1)
-                return T
+            if (t.isEmpty() && count == 1)
+                return t
 
-            if (T.isEmpty() && count != 1)
-                return TPlural
+            if (t.isEmpty() && count != 1)
+                return tPlural
 
             val lArgs = formatArgs.invoke()
             return if (lArgs == null)
-                L.p(T, TPlural, count)
+                L.p(t, tPlural, count)
             else
-                L.p(T, TPlural, count, lArgs.formatArgs)
+                L.p(t, tPlural, count, lArgs.formatArgs)
         }
     override val english: String
         get() {
@@ -85,14 +85,14 @@ class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslat
 
             return if (lArgs== null || lArgs.formatArgs.isEmpty()) {
                 if (count == 1)
-                    T
+                    t
                 else
-                    TPlural
+                    tPlural
             } else {
                 if (count == 1)
-                    L.getFormattedString(T, lArgs.formatArgs) // MessageFormat(T).format(lArgs.formatArgs)
+                    L.getFormattedString(t, lArgs.formatArgs) // MessageFormat(T).format(lArgs.formatArgs)
                 else
-                    L.getFormattedString(TPlural, lArgs.formatArgs) //MessageFormat(TPlural).format(lArgs.formatArgs)
+                    L.getFormattedString(tPlural, lArgs.formatArgs) //MessageFormat(TPlural).format(lArgs.formatArgs)
             }
         }
 }
@@ -323,11 +323,11 @@ class L {
         /** Had to add the annotation in order to access this method from a Java file.
         * [See](https://www.baeldung.com/kotlin/companion-objects-in-java) */
         @JvmStatic
-        fun t(T:String, vararg args:Any):String{
+        fun t(text:String, vararg args:Any):String{
             var res: String
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupString(T)
+                    res = lookupDictionary[currentLanguage]!!.lookupString(text)
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -337,7 +337,7 @@ class L {
                     return res
                 }
             }
-            res = T
+            res = text
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -346,11 +346,11 @@ class L {
             }
             return res
         }
-        fun t(T:String, args:List<Any>):String{
+        fun t(text:String, args:List<Any>):String{
             var res: String
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupString(T)
+                    res = lookupDictionary[currentLanguage]!!.lookupString(text)
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -360,7 +360,7 @@ class L {
                     return res
                 }
             }
-            res = T
+            res = text
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -370,11 +370,11 @@ class L {
             return res
         }
 
-        fun p(T:String, TPlural:String, n:Int, vararg args:Any):String {
+        fun p(textSingular:String, textPlural:String, n:Int, vararg args:Any):String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(T, TPlural, n)
+                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(textSingular, textPlural, n)
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -385,7 +385,7 @@ class L {
                 }
             }
             //couldn't find resource context so return default values
-            res = if (n == 1) T else TPlural
+            res = if (n == 1) textSingular else textPlural
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -394,11 +394,11 @@ class L {
             }
             return res
         }
-        fun p(T:String, TPlural:String, n:Int, args:List<Any>):String {
+        fun p(textSingular:String, textPlural:String, n:Int, args:List<Any>):String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(T, TPlural, n)
+                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(textSingular, textPlural, n)
                     if (args.isNotEmpty()) {
                         if(res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -409,7 +409,7 @@ class L {
                 }
             }
             //couldn't find resource context so return default values
-            res = if (n == 1) T else TPlural
+            res = if (n == 1) textSingular else textPlural
             if (args.isNotEmpty()) {
                 if(res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -419,12 +419,12 @@ class L {
             return res
         }
 
-        fun i(t:String, args:()->LArgsInfo? = {null}):ITranslatable{
-            return MS(t,args)
+        fun i(text:String, args:()->LArgsInfo? = {null}):ITranslatable{
+            return MS(text,args)
         }
 
-        fun ip(t:String, tPlural:String, n: ()->Int, args:()->LArgsInfo):ITranslatable{
-            return MP(t,tPlural,n,args)
+        fun ip(textSingular:String, textPlural:String, n: ()->Int, args:()->LArgsInfo):ITranslatable{
+            return MP(textSingular,textPlural,n,args)
         }
 
         /**
@@ -589,9 +589,11 @@ class L {
         }
 
         /**
+         *
          * @param pattern String pattern. e.g. "Only {0} days left for your birthday"
          * @param args  arguments list passed to replace the place holders in the pattern. e.g. listOf(4)
          * If the above examples string are passed, this should return the following:  Only 4 days left for your birthday
+         * This was created so that MessageFormat is only used inside this and it can be replaced easily if needed in the future.
          */
         fun getFormattedString(pattern:String, args:List<Any>):String {
             try {
