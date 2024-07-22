@@ -115,7 +115,7 @@ class L {
          * Locale assumed based on the currently selected language.
          * Even if, say, a language like German is selected from the app and then the app is closed, when the app
          * is started up, as the language changes from "en" to "de" this will get assigned the correct Locale for de.
-         * check [setMainLocaleForCurrentLanguage] a descriptive explaination for why this was needed.
+         * check [findAndStoreMainLocaleForCurrentLanguage] a descriptive explaination for why this was needed.
          */
         private var mainLocaleOfCurrentLanguage: Locale = Locale.US
 
@@ -469,7 +469,7 @@ class L {
 
             if (changed) {
                 raiseLocaleChangedEvent()
-                setMainLocaleForCurrentLanguage() // As we are in the class that the language change is made itself, not using a RxBus subscription unnecessarily to do this
+                findAndStoreMainLocaleForCurrentLanguage() // As we are in the class that the language change is made itself, not using a RxBus subscription unnecessarily to do this
             }
         }
 
@@ -645,7 +645,7 @@ class L {
          * In another place in the code, as the above scenario was unforeseen, the app was crashing as well.
          * Therefore, we now find the main locale of the current language so that MessageFormat can be given an appropriate Locale without being at the mercy of the user's device locale.
          */
-        private fun setMainLocaleForCurrentLanguage() {
+        private fun findAndStoreMainLocaleForCurrentLanguage() {
             mainLocaleOfCurrentLanguage =
                 if (currentLanguage.lowercase(Locale.US) == "blank")
                     Locale.US
