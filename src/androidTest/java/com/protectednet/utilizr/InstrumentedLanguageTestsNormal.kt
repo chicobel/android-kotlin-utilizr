@@ -3,7 +3,6 @@ package com.protectednet.utilizr
 import android.os.Build
 import android.os.LocaleList
 import android.util.Log
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.protectednet.utilizr.GetText.L
 import com.protectednet.utilizr.GetText.Localization.ResourceContext
@@ -22,15 +21,51 @@ import java.util.Locale
 
 @RunWith(Suite::class)
 @Suite.SuiteClasses(InstrumentedLanguageTestsNormal::class, InstrumentedLanguageTestsGroup1Parameterized::class)
-class LClassTestSuite
+class LClassTestSuite {
 
+    companion object {
+
+        private var moFilesIndexed: Boolean = false
+        private var languagesCodesList: List<String>? = null
+
+        internal fun indexMoFilesAndGetAllSupportedLanguageCodes(): List<String> {
+
+            if (moFilesIndexed) return languagesCodesList!!
+            val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+
+            /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
+            *  It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
+            */
+            val assets = appContext.assets
+            val langCodesList = mutableListOf<String>()
+
+            val moFiles = assets.list("locales")
+            if (moFiles != null) {
+                for (mo in moFiles) {
+                    val language = mo.substring(0, 2)
+                    langCodesList.add(language)
+                    try {
+                        val moStream = assets.open("locales/$mo")
+                        val data = moStream.readBytes()
+                        moStream.close()
+                        L.indexMoFile(language, data)
+                    } catch (e: Exception) {
+                        Log.d("InstrumentTest", e.message ?: "")
+                    }
+                }
+            }
+            languagesCodesList = langCodesList
+
+            return langCodesList
+        }
+
+    }
+
+}
 
 /**
  * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
  */
-@RunWith(AndroidJUnit4::class)
 class InstrumentedLanguageTestsNormal {
 
     // This was there before changes so leaving although it is not doing anything useful
@@ -45,31 +80,9 @@ class InstrumentedLanguageTestsNormal {
 
     @OptIn(ExperimentalUnsignedTypes::class)
     @Before
-    fun indexMoFiles() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-/* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
-        * It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
-        */
-
-        val assets = appContext.assets
-
-        val moFiles = assets.list("locales")
-        if (moFiles != null) {
-            for (mo in moFiles) {
-                val language = mo.substring(0, 2)
-                try {
-                    val moStream = assets.open("locales/$mo")
-                    val data = moStream.readBytes()
-                    moStream.close()
-                    L.indexMoFile(language, data)
-                } catch (e: Exception) {
-                    Log.d("InstrumentTest", e.message ?: "")
-                }
-            }
-        }
+    fun prepareForTesting() {
+        LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
     }
-
 
     @Test
     fun t_englishTextWithNoPlaceholders_germanResult() {
@@ -121,12 +134,10 @@ class InstrumentedLanguageTestsNormal {
 
     }
 
-/**
+    /**
      * Developed to test [this](https://github.com/protectednet/android-adblock/issues/273) issue.
      * Make sure the language is Arabic, the locale is United Arab Emirates and the TODO
      */
-
-
     @Test
     fun p_englishSingularTextInArabicLocale_germanSingularResult() {
 
@@ -277,7 +288,7 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
         fun data(): List<Array<String>> {
             var langCodesList = listOf<String>()
             if (!moFilesIndexed) {
-                langCodesList = indexMoFilesAndProvideLanguageCodes()
+                langCodesList = LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
                 moFilesIndexed = true
             }
 
@@ -294,69 +305,6 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
             return finalParametersListForTests
         }
 
-        private fun indexMoFilesAndProvideLanguageCodes(): List<String> {
-            val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-            /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
-            * It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
-            */
-            val assets = appContext.assets
-            val langCodesList = mutableListOf<String>()
-
-            val moFiles = assets.list("locales")
-            if (moFiles != null) {
-                for (mo in moFiles) {
-                    val language = mo.substring(0, 2)
-                    langCodesList.add(language)
-                    try {
-                        val moStream = assets.open("locales/$mo")
-                        val data = moStream.readBytes()
-                        moStream.close()
-                        L.indexMoFile(language, data)
-                    } catch (e: Exception) {
-                        Log.d("InstrumentTest", e.message ?: "")
-                    }
-                }
-            }
-
-            return langCodesList
-        }
-
-
     }
 
 }
-
-
-
-/*
-@RunWith(Parameterized::class)
-class MyParameterizedTest(private val input: String, private val expected: String) {
-
-    @Test
-    fun testSomething() {
-        val actualResult = processInput(input) // Replace with your actual logic
-        assertEquals(expected, actualResult)
-    }
-
-    companion object {
-        @JvmStatic
-        @Parameterized.Parameters
-        fun data(): Collection<Array<Any>> {
-            return listOf(
-                //arrayOf("input1", "expected1"),
-                arrayOf("expected1", "expected1"),
-                arrayOf("input2", "expected2"),
-                arrayOf("input3", "expected3")
-                // Add more test cases here
-            )
-        }
-    }
-
-    // Helper function to simulate some processing (replace with your actual logic)
-    private fun processInput(input: String): String {
-        //return "Processed: $input"
-        return input
-    }
-}
-*/
