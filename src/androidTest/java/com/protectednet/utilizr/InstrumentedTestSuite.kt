@@ -51,10 +51,12 @@ class LClassTestSuite {
                         L.indexMoFile(language, data)
                     } catch (e: Exception) {
                         Log.d("InstrumentTest", e.message ?: "")
+                        return langCodesList
                     }
                 }
             }
             languagesCodesList = langCodesList
+            moFilesIndexed = true
 
             return langCodesList
         }
@@ -245,7 +247,6 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
     //  copy over the latest MO files
     @Test
     fun testThis() {
-        //indexMoFiles()
 
         Log.d("TEST", "-------------------------------------")
         Log.d("TEST", "Input = $englishText")
@@ -281,17 +282,11 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
 
     companion object {
 
-        var moFilesIndexed = false
-
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}") // Omitting {2} as the last part of some text can't be easily read in the IDE
         fun data(): List<Array<String>> {
-            var langCodesList = listOf<String>()
-            if (!moFilesIndexed) {
-                langCodesList = LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
-                moFilesIndexed = true
-            }
 
+            val langCodesList = LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
             val finalParametersListForTests = mutableListOf<Array<String>>()
             val allDictionaries = L.getLookupDictionary()
             var langSpecificDictionary:  ResourceContext?
@@ -301,8 +296,8 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
                     finalParametersListForTests.add(arrayOf(langCode, englishText, translatedText))
                 }
             }
-
             return finalParametersListForTests
+
         }
 
     }
