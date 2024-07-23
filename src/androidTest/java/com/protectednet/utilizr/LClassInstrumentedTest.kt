@@ -3,16 +3,15 @@ package com.protectednet.utilizr
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.protectednet.utilizr.GetText.L
+import com.protectednet.utilizr.GetText.Localization.ResourceContext
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
-import org.junit.Assert.assertEquals
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 //import org.junit.Assert.*
 import org.junit.runners.Parameterized
-import kotlin.math.exp
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -194,7 +193,7 @@ class LClassInstrumentedTest {
 */
 
 @RunWith(Parameterized::class)
-class LanguageComprehensiveTest(private val input: String, private val expected: String) {
+class LanguageComprehensiveTest(private val langCode: String, private val englishText: String, private val translatedText: String) {
 
    /* @OptIn(ExperimentalUnsignedTypes::class)
     @Before
@@ -222,16 +221,20 @@ class LanguageComprehensiveTest(private val input: String, private val expected:
         }
     }*/
 
+
+    // TODO: pass even the parameters as parameters
+    //  copy over the latest MO files
     @Test
     fun testThis() {
         //indexMoFiles()
 
         Log.d("TEST", "-------------------------------------")
-        Log.d("TEST", "Input = $input")
-        Log.d("TEST", "Expected = $expected")
+        Log.d("TEST", "Input = $englishText")
+        Log.d("TEST", "Expected = $translatedText")
         Log.d("TEST", "-------------------------------------")
-        val actualResult: String
-        var actuallyExpected = expected
+        L.setLanguage(langCode)
+        val actual: String
+        var expected = translatedText
        /* if (input.contains("{0}") && input.contains("{1}")) {
              actualResult = L.t(input, "DummyParam1Of2", "DummyParam2Of2")
              actuallyExpected = actuallyExpected.replace("{0}", "DummyParam1Of2")
@@ -243,18 +246,18 @@ class LanguageComprehensiveTest(private val input: String, private val expected:
             actualResult = L.t(input) // Replace with your actual logic
         }*/
 
-        if (input.contains("{0}") && input.contains("{1}")) {
-            actualResult = L.t(input, 1, 2)
-            actuallyExpected = actuallyExpected.replace("{0}", "1")
-            actuallyExpected = actuallyExpected.replace("{1}", "2")
-        } else if (input.contains("{0}")) {
-            actualResult = L.t(input, 1)
-            actuallyExpected = actuallyExpected.replace("{0}", "1")
+        if (englishText.contains("{0}") && englishText.contains("{1}")) {
+            actual = L.t(englishText, 1, 2)
+            expected = expected.replace("{0}", "1")
+            expected = expected.replace("{1}", "2")
+        } else if (englishText.contains("{0}")) {
+            actual = L.t(englishText, 1)
+            expected = expected.replace("{0}", "1")
         } else {
-            actualResult = L.t(input)
+            actual = L.t(englishText)
         }
 
-        assertThat(actualResult, Matchers.equalTo(actuallyExpected))
+        assertThat(actual, Matchers.equalTo(expected))
     }
 
     companion object {
@@ -262,33 +265,49 @@ class LanguageComprehensiveTest(private val input: String, private val expected:
         var moFilesIndexed = false
 
         @JvmStatic
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}, {2}")
         fun data(): List<Array<String>> {
+            var langCodesList = listOf<String>()
             if (!moFilesIndexed) {
-                indexMoFiles()
+                langCodesList = indexMoFilesAndProvideLanguageCodes()
                 moFilesIndexed = true
             }
-            val langCode = "de"
-            L.setLanguage(langCode)
+            //val langCode = "de"
+            //L.setLanguage(langCode)
+            val t = mutableListOf<Array<String>>() // TODO: to be renamed
             val allDictionaries = L.getLookupDictionary()
+            var langSpecificDictionary:  ResourceContext?
+            langCodesList.forEach {langCode->
+                langSpecificDictionary = allDictionaries[langCode]
+                //val allEngSentencesWithTranslations =
+                //t.add(langSpecificDictionary!!.translationLookup.map { arrayOf(langCode, it.key, it.value) })
+                langSpecificDictionary!!.translationLookup.forEach { (englishText, translatedText) ->
+                    t.add(arrayOf(langCode, englishText, translatedText))
+                }
+            }
+
+            /*val allDictionaries = L.getLookupDictionary()
             val langSpecificDictionary = allDictionaries[langCode]
             val allEngSentencesWithTranslations =
-                langSpecificDictionary!!.translationLookup.map { arrayOf(it.key, it.value) }
-            return allEngSentencesWithTranslations
+                langSpecificDictionary!!.translationLookup.map { arrayOf(it.key, it.value) }*/
+
+            return t
         }
 
-        private fun indexMoFiles() {
+        private fun indexMoFilesAndProvideLanguageCodes(): List<String> {
             val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
             /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
             * It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
             */
             val assets = appContext.assets
+            val langCodesList = mutableListOf<String>()
 
             val moFiles = assets.list("locales")
             if (moFiles != null) {
                 for (mo in moFiles) {
                     val language = mo.substring(0, 2)
+                    langCodesList.add(language)
                     try {
                         val moStream = assets.open("locales/$mo")
                         val data = moStream.readBytes()
@@ -299,6 +318,8 @@ class LanguageComprehensiveTest(private val input: String, private val expected:
                     }
                 }
             }
+
+            return langCodesList
         }
 
 
