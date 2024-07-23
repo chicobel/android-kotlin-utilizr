@@ -255,16 +255,6 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
         L.setLanguage(langCode)
         val actual: String
         var expected = translatedText
-       /* if (input.contains("{0}") && input.contains("{1}")) {
-             actualResult = L.t(input, "DummyParam1Of2", "DummyParam2Of2")
-             actuallyExpected = actuallyExpected.replace("{0}", "DummyParam1Of2")
-             actuallyExpected = actuallyExpected.replace("{1}", "DummyParam2Of2")
-        } else if (input.contains("{0}")) {
-             actualResult = L.t(input, "DummyParam1Of1")
-             actuallyExpected = actuallyExpected.replace("{0}", "DummyParam1Of1")
-        } else {
-            actualResult = L.t(input) // Replace with your actual logic
-        }*/
 
         if (englishText.contains("{0}") && englishText.contains("{1}")) {
             actual = L.t(englishText, 1, 2)
@@ -300,6 +290,32 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
          } else {
              actual = L.t(englishText) // Replace with your actual logic
          }
+
+        assertThat(actual, Matchers.equalTo(expected))
+    }
+
+    @Test
+    fun t_withIntegersAsListOfArgs_allLanguages() {
+
+        Log.d("TEST", "-------------------------------------")
+        Log.d("TEST", "Input = $englishText")
+        Log.d("TEST", "Expected = $translatedText")
+        Log.d("TEST", "-------------------------------------")
+        L.setLanguage(langCode)
+        val actual: String
+        var expected = translatedText
+
+        if (englishText.contains("{0}") && englishText.contains("{1}")) {
+            actual = L.t(englishText, listOf(1,2))
+            expected = expected.replace("{0}", "1")
+            expected = expected.replace("{1}", "2")
+        } else if (englishText.contains("{0}")) {
+            actual = L.t(englishText, listOf(1))
+            expected = expected.replace("{0}", "1")
+        } else {
+            actual = L.t(englishText)
+        }
+
 
         assertThat(actual, Matchers.equalTo(expected))
     }
