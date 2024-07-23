@@ -265,33 +265,25 @@ class LanguageComprehensiveTest(private val langCode: String, private val englis
         var moFilesIndexed = false
 
         @JvmStatic
-        @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}, {2}")
+        @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}") // Omitting {2} as the last part of some text can't be easily read in the IDE
         fun data(): List<Array<String>> {
             var langCodesList = listOf<String>()
             if (!moFilesIndexed) {
                 langCodesList = indexMoFilesAndProvideLanguageCodes()
                 moFilesIndexed = true
             }
-            //val langCode = "de"
-            //L.setLanguage(langCode)
-            val t = mutableListOf<Array<String>>() // TODO: to be renamed
+
+            val finalParametersListForTests = mutableListOf<Array<String>>()
             val allDictionaries = L.getLookupDictionary()
             var langSpecificDictionary:  ResourceContext?
             langCodesList.forEach {langCode->
                 langSpecificDictionary = allDictionaries[langCode]
-                //val allEngSentencesWithTranslations =
-                //t.add(langSpecificDictionary!!.translationLookup.map { arrayOf(langCode, it.key, it.value) })
                 langSpecificDictionary!!.translationLookup.forEach { (englishText, translatedText) ->
-                    t.add(arrayOf(langCode, englishText, translatedText))
+                    finalParametersListForTests.add(arrayOf(langCode, englishText, translatedText))
                 }
             }
 
-            /*val allDictionaries = L.getLookupDictionary()
-            val langSpecificDictionary = allDictionaries[langCode]
-            val allEngSentencesWithTranslations =
-                langSpecificDictionary!!.translationLookup.map { arrayOf(it.key, it.value) }*/
-
-            return t
+            return finalParametersListForTests
         }
 
         private fun indexMoFilesAndProvideLanguageCodes(): List<String> {
