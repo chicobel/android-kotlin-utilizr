@@ -246,7 +246,7 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
     // TODO: pass even the parameters as parameters
     //  copy over the latest MO files
     @Test
-    fun testThis() {
+    fun t_withIntegersAsVarargs_allLanguages() {
 
         Log.d("TEST", "-------------------------------------")
         Log.d("TEST", "Input = $englishText")
@@ -280,10 +280,34 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
         assertThat(actual, Matchers.equalTo(expected))
     }
 
+    @Test
+    fun t_withTextAsVarargs_allLanguages() {
+
+        Log.d("TEST", "-------------------------------------")
+        Log.d("TEST", "Input = $englishText")
+        Log.d("TEST", "Expected = $translatedText")
+        Log.d("TEST", "-------------------------------------")
+        L.setLanguage(langCode)
+        val actual: String
+        var expected = translatedText
+         if (englishText.contains("{0}") && englishText.contains("{1}")) {
+              actual = L.t(englishText, "DummyParam1Of2", "DummyParam2Of2")
+              expected = expected.replace("{0}", "DummyParam1Of2")
+              expected = expected.replace("{1}", "DummyParam2Of2")
+         } else if (englishText.contains("{0}")) {
+              actual = L.t(englishText, "DummyParam1Of1")
+              expected = expected.replace("{0}", "DummyParam1Of1")
+         } else {
+             actual = L.t(englishText) // Replace with your actual logic
+         }
+
+        assertThat(actual, Matchers.equalTo(expected))
+    }
+
     companion object {
 
         @JvmStatic
-        @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}") // Omitting {2} as the last part of some text can't be easily read in the IDE
+        @Parameterized.Parameters(name = "{index}: langCode = {0}, engText = {1}") // Omitting {2} as the last part of some long text can't be easily read in the IDE
         fun data(): List<Array<String>> {
 
             val langCodesList = LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
