@@ -33,9 +33,8 @@ class LClassTestSuite {
             if (moFilesIndexed) return languagesCodesList!!
             val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
-            /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
-            *  It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
-            */
+            /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 from branch 1.3.61 to facilitate testing
+             *  It would be good to periodically copy the latest mo files if the latest translations need to be used for testing. */
             val assets = appContext.assets
             val langCodesList = mutableListOf<String>()
 
@@ -70,7 +69,7 @@ class LClassTestSuite {
  */
 class InstrumentedLanguageTestsNormal {
 
-    // This was there before changes so leaving although it is not doing anything useful
+    // This was there before changes(in the example Instrumentation tests that were possibly created by the IDE) so leaving although it is not doing anything useful
     @Test
     fun useAppContext() {
         // Context of the app under test.
@@ -78,9 +77,6 @@ class InstrumentedLanguageTestsNormal {
         assertEquals("com.protectednet.utilizr.test", appContext.packageName)
     }
 
-    // TODO change the locale to that problematic one in some tests
-
-    @OptIn(ExperimentalUnsignedTypes::class)
     @Before
     fun prepareForTesting() {
         LClassTestSuite.indexMoFilesAndGetAllSupportedLanguageCodes()
@@ -214,37 +210,13 @@ class InstrumentedLanguageTestsNormal {
 
 }
 
+/*
+* Using a parameterized test class to avoid code duplication, to check translations in all languages etc.
+* Doesn't need @RunWith(AndroidJUnit4.class) because of the reason here: https://stackoverflow.com/a/46553713
+*/
 @RunWith(Parameterized::class)
 class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String, private val englishText: String, private val translatedText: String) {
 
-   /* @OptIn(ExperimentalUnsignedTypes::class)
-    @Before
-    fun indexMoFiles() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-        *//* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
-        * It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
-        *//*
-        val assets = appContext.assets
-
-        val moFiles = assets.list("locales")
-        if (moFiles != null) {
-            for (mo in moFiles) {
-                val language = mo.substring(0, 2)
-                try {
-                    val moStream = assets.open("locales/$mo")
-                    val data = moStream.readBytes()
-                    moStream.close()
-                    L.indexMoFile(language, data)
-                } catch (e: Exception) {
-                    Log.d("InstrumentTest", e.message ?: "")
-                }
-            }
-        }
-    }*/
-
-    // TODO: pass even the parameters as parameters
-    //  copy over the latest MO files
     @Test
     fun t_withIntegersAsVarargs_allLanguages() {
 
@@ -297,10 +269,6 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
     @Test
     fun t_withIntegersAsListOfArgs_allLanguages() {
 
-        Log.d("TEST", "-------------------------------------")
-        Log.d("TEST", "Input = $englishText")
-        Log.d("TEST", "Expected = $translatedText")
-        Log.d("TEST", "-------------------------------------")
         L.setLanguage(langCode)
         val actual: String
         var expected = translatedText
@@ -315,7 +283,6 @@ class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String,
         } else {
             actual = L.t(englishText)
         }
-
 
         assertThat(actual, Matchers.equalTo(expected))
     }
