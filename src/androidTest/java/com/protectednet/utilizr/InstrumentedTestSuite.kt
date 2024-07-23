@@ -134,7 +134,8 @@ class InstrumentedLanguageTestsNormal {
 
     /**
      * Developed to test [this](https://github.com/protectednet/android-adblock/issues/273) issue.
-     * Make sure the language is Arabic, the locale is United Arab Emirates and the TODO
+     * Make sure the language is Arabic, the locale is United Arab Emirates and the correct numbers option is selected as documented in the
+     * in the "How to reproduce the error" section of the above issue.
      */
     @Test
     fun p_englishSingularTextInArabicLocale_germanSingularResult() {
