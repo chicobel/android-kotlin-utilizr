@@ -1,26 +1,37 @@
 package com.protectednet.utilizr
 
+import android.os.Build
+import android.os.LocaleList
 import android.util.Log
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.protectednet.utilizr.GetText.L
 import com.protectednet.utilizr.GetText.Localization.ResourceContext
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
+import org.junit.Assert.assertEquals
+import org.junit.Before
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 //import org.junit.Assert.*
 import org.junit.runners.Parameterized
+import org.junit.runners.Suite
+import java.util.Locale
+
+@RunWith(Suite::class)
+@Suite.SuiteClasses(InstrumentedLanguageTestsNormal::class, InstrumentedLanguageTestsGroup1Parameterized::class)
+class LClassTestSuite
+
 
 /**
  * Instrumented test, which will execute on an Android device.
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-/*
 @RunWith(AndroidJUnit4::class)
-class LClassInstrumentedTest {
+class InstrumentedLanguageTestsNormal {
 
     // This was there before changes so leaving although it is not doing anything useful
     @Test
@@ -37,10 +48,9 @@ class LClassInstrumentedTest {
     fun indexMoFiles() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
-        */
 /* A new asset folder was created and the mo files copied over from the main source set's asset folder on 19th July 2024 to facilitate testing
         * It would be good to periodically copy the latest mo files if the latest translations need to be used for testing
-        *//*
+        */
 
         val assets = appContext.assets
 
@@ -111,11 +121,11 @@ class LClassInstrumentedTest {
 
     }
 
-    */
 /**
      * Developed to test [this](https://github.com/protectednet/android-adblock/issues/273) issue.
      * Make sure the language is Arabic, the locale is United Arab Emirates and the TODO
-     *//*
+     */
+
 
     @Test
     fun p_englishSingularTextInArabicLocale_germanSingularResult() {
@@ -190,10 +200,9 @@ class LClassInstrumentedTest {
     }
 
 }
-*/
 
 @RunWith(Parameterized::class)
-class LanguageComprehensiveTest(private val langCode: String, private val englishText: String, private val translatedText: String) {
+class InstrumentedLanguageTestsGroup1Parameterized(private val langCode: String, private val englishText: String, private val translatedText: String) {
 
    /* @OptIn(ExperimentalUnsignedTypes::class)
     @Before
@@ -220,7 +229,6 @@ class LanguageComprehensiveTest(private val langCode: String, private val englis
             }
         }
     }*/
-
 
     // TODO: pass even the parameters as parameters
     //  copy over the latest MO files
