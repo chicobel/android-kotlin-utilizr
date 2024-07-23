@@ -657,5 +657,12 @@ class L {
             )
         }
 
+        /**
+         * This was added to expose a private field so that some tests could be written.
+         */
+        internal fun getLookupDictionary(): HashMap<String, ResourceContext>  {
+            return lookupDictionary
+        }
+
     }
 }
