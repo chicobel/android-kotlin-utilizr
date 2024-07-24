@@ -39,6 +39,10 @@ class LClassTestSuite {
             val langCodesList = mutableListOf<String>()
 
             val moFiles = assets.list("locales")
+
+            if (moFiles?.isEmpty() == true) {
+                throw Throwable("Looks like you haven't copied the files ending with the .mo extension to the assets/locales folder in the androidTest source set. Make sure that the files are copied to this folder before running these tests. Make sure the .mo files are not commited to Git though.")
+            }
             if (moFiles != null) {
                 for (mo in moFiles) {
                     val language = mo.substring(0, 2)
@@ -133,9 +137,9 @@ class InstrumentedLanguageTestsNormal {
     }
 
     /**
-     * Developed to test [this](https://github.com/protectednet/android-adblock/issues/273) issue.
-     * Make sure the language is Arabic, the locale is United Arab Emirates and the correct numbers option is selected as documented in the
-     * in the "How to reproduce the error" section of the above issue.
+     * Developed to test if the translations still work when "indian arabic numerals" have been selected for the Arabic language, United Arab Emirates locale. I.e. when integers are used as parameters
+     * in the translations.
+     * Make sure the language is Arabic, the locale is United Arab Emirates and the "indian arabic numerals" option is selected to properly test this.
      */
     @Test
     fun p_englishSingularTextInArabicLocale_germanSingularResult() {
