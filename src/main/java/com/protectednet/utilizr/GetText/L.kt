@@ -12,44 +12,52 @@ import java.util.*
 import kotlin.collections.HashMap
 import java.text.MessageFormat
 
-interface ITranslatable{
-    val english:String
-    val translation:String
+
+interface ITranslatable {
+    val english: String
+    val translation: String
 }
 
-class LArgsInfo(vararg fa:Any){
-    val formatArgs= fa.toList()
+class LArgsInfo(vararg fa: Any) {
+    val formatArgs = fa.toList()
 }
 
-class SupportedLanguage(val name:String, val nativeName:String, val ietfLanguageTag:String)
+class SupportedLanguage(val name: String, val nativeName: String, val ietfLanguageTag: String)
 
-class MS (t:String, fa: ()->LArgsInfo?): ITranslatable {
-    val T = t
+/**
+ * Not sure what MS stands for. Best guess someone came up with was: Mo Singular
+ */
+class MS(text: String, fa: () -> LArgsInfo?) : ITranslatable {
+    val t = text
     val formatArgs = fa
     override val translation: String
         get() {
             val lArgs = formatArgs.invoke()
-            if (T.isEmpty())
-                return T
+            if (t.isEmpty())
+                return t
             return if (lArgs != null && lArgs.formatArgs.isNotEmpty())
-                L.t(T, lArgs.formatArgs)
+                L.t(t, lArgs.formatArgs)
             else
-                L.t(T)
+                L.t(t)
         }
 
     override val english: String
         get() {
             val lArgs = formatArgs.invoke()
             return if (lArgs != null && lArgs.formatArgs.isNotEmpty())
-                L.t(T, lArgs.formatArgs)
+                L.t(t, lArgs.formatArgs)
             else
-                return T
+                return t
         }
 }
 
-class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslatable {
-    private val T = t
-    private val TPlural = tplural
+/**
+ * Not sure what MP stands for. Best guess someone came up with was: Mo Plural.
+ */
+class MP(textSingular: String, textPlural: String, c: () -> Int, fa: () -> LArgsInfo?) :
+    ITranslatable {
+    private val t = textSingular
+    private val tPlural = textPlural
     private val counter = c
     private val formatArgs = fa
 
@@ -57,100 +65,118 @@ class MP(t:String, tplural:String,c:() -> Int ,fa: () -> LArgsInfo?) : ITranslat
         get() {
             val count = counter.invoke()
 
-            if (T.isEmpty() && count == 1)
-                return T
+            if (t.isEmpty() && count == 1)
+                return t
 
-            if (T.isEmpty() && count != 1)
-                return TPlural
+            if (t.isEmpty() && count != 1)
+                return tPlural
 
             val lArgs = formatArgs.invoke()
             return if (lArgs == null)
-                L.p(T, TPlural, count)
+                L.p(t, tPlural, count)
             else
-                L.p(T, TPlural, count, lArgs.formatArgs)
+                L.p(t, tPlural, count, lArgs.formatArgs)
         }
     override val english: String
         get() {
             val count = counter.invoke()
             val lArgs = formatArgs.invoke()
 
-            return if (lArgs== null || lArgs.formatArgs.isEmpty()) {
+            return if (lArgs == null || lArgs.formatArgs.isEmpty()) {
                 if (count == 1)
-                    T
+                    t
                 else
-                    TPlural
+                    tPlural
             } else {
                 if (count == 1)
-                    MessageFormat(T).format(lArgs.formatArgs)
+                    L.getFormattedString(
+                        t,
+                        lArgs.formatArgs
+                    )
                 else
-                    MessageFormat(TPlural).format(lArgs.formatArgs)
+                    L.getFormattedString(
+                        tPlural,
+                        lArgs.formatArgs
+                    )
             }
         }
 }
 
 class L {
-    companion object{
-        const val TAG="GetText"
-        private var lookupDictionary:HashMap<String, ResourceContext> = hashMapOf()
-        private var moFileLookup:HashMap<String,String> = hashMapOf()
-        private var indexedMoFiles:Boolean=false
-        private val debugLanguage:SupportedLanguage= SupportedLanguage("Blank","*****", "blank")
-        var currentLanguage:String= "en"
+    companion object {
+        const val TAG = "GetText"
+        private var lookupDictionary: HashMap<String, ResourceContext> = hashMapOf()
+        private var moFileLookup: HashMap<String, String> = hashMapOf()
+        private var indexedMoFiles: Boolean = false
+        private val debugLanguage: SupportedLanguage = SupportedLanguage("Blank", "*****", "blank")
+        var currentLanguage: String = "en"
 
-        private var mSupportedLanguages:List<SupportedLanguage> = listOf()
-        val supportedLanguages:List<SupportedLanguage>
-        get() {
-            val supported = mutableListOf<SupportedLanguage>()
-            try {
-                if (mSupportedLanguages.isNotEmpty())
-                    return mSupportedLanguages
+        /**
+         * Locale assumed based on the currently selected language.
+         * Even if, say, a language like German is selected from the app and then the app is closed, when the app
+         * is started up, as the language changes from "en" to "de" this will get assigned the correct Locale for de.
+         * check [findAndStoreMainLocaleForCurrentLanguage] a descriptive explaination for why this was needed.
+         */
+        private var mainLocaleOfCurrentLanguage: Locale = Locale.US
 
-                if (!indexedMoFiles) {
-                    return  mSupportedLanguages
-                }
+        private var mSupportedLanguages: List<SupportedLanguage> = listOf()
+        val supportedLanguages: List<SupportedLanguage>
+            get() {
+                val supported = mutableListOf<SupportedLanguage>()
+                try {
+                    if (mSupportedLanguages.isNotEmpty())
+                        return mSupportedLanguages
+
+                    if (!indexedMoFiles) {
+                        return mSupportedLanguages
+                    }
 
 //                var langNotLocale = moFileLookup.keys.filter { p -> !p.contains("-") }
-                val allCultures = Locale.getAvailableLocales()
-                val tmp = hashMapOf<String,Boolean>()
-                for (culture in allCultures) {
-                    Log.d(TAG, "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}")
-                    if (!moFileLookup.containsKey(culture.language))
-                        continue
-
-                    if(tmp.containsKey(culture.language))
-                        continue
-                    tmp[culture.language]=true
-                    supported.add(
-                        SupportedLanguage(
-                            culture.displayName,
-                            culture.displayName,
-                            culture.language
+                    val allCultures = Locale.getAvailableLocales()
+                    val tmp = hashMapOf<String, Boolean>()
+                    for (culture in allCultures) {
+                        Log.d(
+                            TAG,
+                            "culture.language = ${culture.language} culture.displayName = ${culture.displayName} total locales on the device = ${allCultures.size}"
                         )
-                    )
+                        if (!moFileLookup.containsKey(culture.language))
+                            continue
+
+                        if (tmp.containsKey(culture.language))
+                            continue
+                        tmp[culture.language] = true
+                        supported.add(
+                            SupportedLanguage(
+                                culture.displayName,
+                                culture.displayName,
+                                culture.language
+                            )
+                        )
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Failed to get list, defaulting to English only $ex")
                 }
-            } catch (ex: Exception) {
-                Log.e(TAG, "Failed to get list, defaulting to English only $ex")
+
+                // We always have English without en-GB.po
+                supported.add(SupportedLanguage("English", "English", "en"))
+
+                if (BuildConfig.DEBUG) {
+                    //add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
+                    supported.add(debugLanguage)
+                }
+
+                mSupportedLanguages = supported
+                return mSupportedLanguages
             }
 
-            // We always have English without en-GB.po
-            supported.add(SupportedLanguage("English", "English", "en"))
+        private var mSupportedLanguagesSorted: List<SupportedLanguage> = listOf()
 
-            if (BuildConfig.DEBUG) {
-                //add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
-                supported.add(debugLanguage)
-            }
-
-            mSupportedLanguages = supported
-            return mSupportedLanguages
-        }
-
-        private var mSupportedLanguagesSorted:List<SupportedLanguage> = listOf()
         /**
          * Provides the supported languages in the ascending order of name. "Blank" language will appear at the very end after everything else is sorted.
          * This was adapted by copying the code in supportedLanguages above. It is possible to refactor code to eliminate repetition but to avoid the risk of
          * breaking existing functionality, this was created as a new one.
          */
-        val supportedLanguagesSorted:List<SupportedLanguage>
+        val supportedLanguagesSorted: List<SupportedLanguage>
             get() {
                 var supported = mutableListOf<SupportedLanguage>()
 
@@ -185,8 +211,10 @@ class L {
                         if (tmp.containsKey(aLocale.language))
                             continue
                         tmp[aLocale.language] = true
-                        mainLocaleOfLanguage = Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
-                        displayName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
+                        mainLocaleOfLanguage =
+                            Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
+                        displayName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage)
+                            .replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
                         supported.add(
                             SupportedLanguage(
                                 aLocale.displayName,
@@ -213,7 +241,9 @@ class L {
                 return mSupportedLanguagesSorted
             }
 
-        private var mSupportedLanguagesNativeNamesAndEnglishSorted:List<SupportedLanguage> = listOf()
+        private var mSupportedLanguagesNativeNamesAndEnglishSorted: List<SupportedLanguage> =
+            listOf()
+
         /**
          * Provides a list of the supported languages by the App sorted in the ascending alphabetical order of native names along with their corresponding English names.
          * "Blank" language will appear at the very end of the list after everything else is sorted.
@@ -223,7 +253,7 @@ class L {
          * breaking existing functionality, this was created as a new one.
          * Main motivation for creating this was that supportedLanguagesSorted did not provide the native names.
          */
-        val supportedLangsWithNativeAndEnglishNamesSorted:List<SupportedLanguage>
+        val supportedLangsWithNativeAndEnglishNamesSorted: List<SupportedLanguage>
             get() {
                 var supported = mutableListOf<SupportedLanguage>()
 
@@ -259,8 +289,10 @@ class L {
                             continue
                         tmp[aLocale.language] = true
 
-                        mainLocaleOfLanguage = Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
-                        nativeName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage).replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
+                        mainLocaleOfLanguage =
+                            Locale(aLocale.language) // https://stackoverflow.com/questions/36061116/get-language-name-in-that-language-from-language-code
+                        nativeName = mainLocaleOfLanguage.getDisplayLanguage(mainLocaleOfLanguage)
+                            .replaceFirstChar { it.uppercase() } // each language will appear in its own alphabet
 
                         englishName = mainLocaleOfLanguage.getDisplayLanguage(Locale("en"))
 
@@ -279,7 +311,8 @@ class L {
                 // We always have English without en-GB.po
                 supported.add(SupportedLanguage("English", "English", "en"))
 
-                supported = supported.sortedBy { it.nativeName }.toMutableList() // Note that it is sorted by native name unlike in the other two properties above (supportedLanguagesSorted and supportedLanguages)
+                supported = supported.sortedBy { it.nativeName }
+                    .toMutableList() // Note that it is sorted by native name unlike in the other two properties above (supportedLanguagesSorted and supportedLanguages)
 
                 if (BuildConfig.DEBUG) {
                     // add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
@@ -290,117 +323,131 @@ class L {
                 return mSupportedLanguagesNativeNamesAndEnglishSorted
             }
 
-
         @ExperimentalUnsignedTypes
         fun indexMoFile(ietfLanguageTag: String, s: ByteArray) {
             if (lookupDictionary.containsKey(ietfLanguageTag))
                 return
             try {
-                lookupDictionary[ietfLanguageTag]= ResourceContext.fromStream(s, ietfLanguageTag)
+                lookupDictionary[ietfLanguageTag] = ResourceContext.fromStream(s, ietfLanguageTag)
                 moFileLookup[ietfLanguageTag] = ""
-                indexedMoFiles=true
+                indexedMoFiles = true
             } catch (ex: Exception) {
-               Log.e(TAG,ex.message?:"")
+                Log.e(TAG, ex.message ?: "")
             }
         }
 
         /** Had to add the annotation in order to access this method from a Java file.
-        * [See](https://www.baeldung.com/kotlin/companion-objects-in-java) */
+         * [See](https://www.baeldung.com/kotlin/companion-objects-in-java) */
         @JvmStatic
-        fun t(T:String, vararg args:Any):String{
+        fun t(text: String, vararg args: Any): String {
             var res: String
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupString(T)
+                    res = lookupDictionary[currentLanguage]!!.lookupString(text)
                     if (args.isNotEmpty()) {
-                        if(res.contains("'"))
+                        if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args)
+                        res = getFormattedString(res, args.toList())
                     }
                     return res
                 }
             }
-            res = T
+            res = text
             if (args.isNotEmpty()) {
-                if(res.contains("'"))
+                if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args)
-            }
-            return res
-        }
-        fun t(T:String, args:List<Any>):String{
-            var res: String
-            if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
-                if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupString(T)
-                    if (args.isNotEmpty()) {
-                        if(res.contains("'"))
-                            res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args.toTypedArray())
-                    }
-                    return res
-                }
-            }
-            res = T
-            if (args.isNotEmpty()) {
-                if(res.contains("'"))
-                    res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args.toTypedArray())
+                res = getFormattedString(res, args.toList())
             }
             return res
         }
 
-        fun p(T:String, TPlural:String, n:Int, vararg args:Any):String {
+        fun t(text: String, args: List<Any>): String {
+            var res: String
+            if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
+                if (lookupDictionary[currentLanguage] != null) {
+                    res = lookupDictionary[currentLanguage]!!.lookupString(text)
+                    if (args.isNotEmpty()) {
+                        if (res.contains("'"))
+                            res = res.replace(Regex("(?<!')'(?!')"), "''")
+                        res = getFormattedString(res, args)
+                    }
+                    return res
+                }
+            }
+            res = text
+            if (args.isNotEmpty()) {
+                if (res.contains("'"))
+                    res = res.replace(Regex("(?<!')'(?!')"), "''")
+                res = getFormattedString(res, args)
+            }
+            return res
+        }
+
+        fun p(textSingular: String, textPlural: String, n: Int, vararg args: Any): String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(T, TPlural, n)
+                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(
+                        textSingular,
+                        textPlural,
+                        n
+                    )
                     if (args.isNotEmpty()) {
-                        if(res.contains("'"))
+                        if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args)
+                        res = getFormattedString(res, args.toList())
                     }
                     return res
                 }
             }
             //couldn't find resource context so return default values
-            res = if (n == 1) T else TPlural
+            res = if (n == 1) textSingular else textPlural
             if (args.isNotEmpty()) {
-                if(res.contains("'"))
+                if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args)
+                res = getFormattedString(res, args.toList())
             }
             return res
         }
-        fun p(T:String, TPlural:String, n:Int, args:List<Any>):String {
+
+        fun p(textSingular: String, textPlural: String, n: Int, args: List<Any>): String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
-                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(T, TPlural, n)
+                    res = lookupDictionary[currentLanguage]!!.lookupPluralString(
+                        textSingular,
+                        textPlural,
+                        n
+                    )
                     if (args.isNotEmpty()) {
-                        if(res.contains("'"))
+                        if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
-                        res = MessageFormat(res).format(args.toTypedArray())
+                        res = getFormattedString(res, args)
                     }
                     return res
                 }
             }
             //couldn't find resource context so return default values
-            res = if (n == 1) T else TPlural
+            res = if (n == 1) textSingular else textPlural
             if (args.isNotEmpty()) {
-                if(res.contains("'"))
+                if (res.contains("'"))
                     res = res.replace(Regex("(?<!')'(?!')"), "''")
-                res = MessageFormat(res).format(args.toTypedArray())
+                res = getFormattedString(res, args)
             }
             return res
         }
 
-        fun i(t:String, args:()->LArgsInfo? = {null}):ITranslatable{
-            return MS(t,args)
+        fun i(text: String, args: () -> LArgsInfo? = { null }): ITranslatable {
+            return MS(text, args)
         }
 
-        fun ip(t:String, tPlural:String, n: ()->Int, args:()->LArgsInfo):ITranslatable{
-            return MP(t,tPlural,n,args)
+        fun ip(
+            textSingular: String,
+            textPlural: String,
+            n: () -> Int,
+            args: () -> LArgsInfo
+        ): ITranslatable {
+            return MP(textSingular, textPlural, n, args)
         }
 
         /**
@@ -420,62 +467,61 @@ class L {
                 changed = true
             currentLanguage = lowerIeft
 
-            if (changed)
+            if (changed) {
                 raiseLocaleChangedEvent()
+                findAndStoreMainLocaleForCurrentLanguage() // As we are in the class that the language change is made itself, not using a RxBus subscription unnecessarily to do this
+            }
         }
 
-        private fun preloadLanguage(ietfLanguageTag:String) {
-            if (!lookupDictionary.containsKey(ietfLanguageTag))
-            {
+        private fun preloadLanguage(ietfLanguageTag: String) {
+            if (!lookupDictionary.containsKey(ietfLanguageTag)) {
                 //load the mo file for the specified language code
                 if (BuildConfig.DEBUG) {
                     //add a dummy 'blank' language that always returns a blanked out string - helpful for finding missing translations/errors
                     if (ietfLanguageTag == "blank") {
-                        lookupDictionary["blank"]= DummyResourceContext ("blank",
-                        { s->
-                            val chars = CharArray(s.length)
-                            for (i in chars.indices)
-                            {
-                                chars[i] = if(s[i].isWhitespace()) s[i] else '*'
-                            }
-                            String(chars)
-                        },
-                        { s, p, n ->
-                            val chars = CharArray(s.length)
-                            var insideFormatPlaceholder = 0
-                            for (i in chars.indices)
-                            {
-                                // Don't replace character if whitespace to avoid one long string of *******
-                                // Don't replace string format placeholders, such as {0:N0}
-
-                                chars[i] = s[i]
-                                if (s[i].isWhitespace())
-                                    continue
-
-                                if (s[i] == '{') {
-                                    insideFormatPlaceholder++
-                                    continue
+                        lookupDictionary["blank"] = DummyResourceContext("blank",
+                            { s ->
+                                val chars = CharArray(s.length)
+                                for (i in chars.indices) {
+                                    chars[i] = if (s[i].isWhitespace()) s[i] else '*'
                                 }
+                                String(chars)
+                            },
+                            { s, p, n ->
+                                val chars = CharArray(s.length)
+                                var insideFormatPlaceholder = 0
+                                for (i in chars.indices) {
+                                    // Don't replace character if whitespace to avoid one long string of *******
+                                    // Don't replace string format placeholders, such as {0:N0}
 
-                                if (s[i] == '}') {
-                                    insideFormatPlaceholder--
-                                    continue
+                                    chars[i] = s[i]
+                                    if (s[i].isWhitespace())
+                                        continue
+
+                                    if (s[i] == '{') {
+                                        insideFormatPlaceholder++
+                                        continue
+                                    }
+
+                                    if (s[i] == '}') {
+                                        insideFormatPlaceholder--
+                                        continue
+                                    }
+
+                                    if (insideFormatPlaceholder > 0)
+                                        continue
+
+                                    chars[i] = '*'
+
                                 }
-
-                                if (insideFormatPlaceholder > 0)
-                                    continue
-
-                                chars[i] = '*'
-
-                            }
-                            String (chars)
-                        })
+                                String(chars)
+                            })
                     }
                 }
             }
         }
 
-        private fun raiseLocaleChangedEvent(){
+        private fun raiseLocaleChangedEvent() {
             RxBus.publish(LocaleChangedMessage(currentLanguage))
         }
 
@@ -503,7 +549,9 @@ class L {
          * @return true if the language tag is supported. 'false' if it is not supported.
          */
         fun isLanguageSupportedByApp(ietfLanguageTag: String): Boolean {
-            if (ietfLanguageTag.length != 2 && ietfLanguageTag.contains("-")) throw IllegalArgumentException("Supplied language tag must only have two characters and should not have -")
+            if (ietfLanguageTag.length != 2 && ietfLanguageTag.contains("-")) throw IllegalArgumentException(
+                "Supplied language tag must only have two characters and should not have -"
+            )
             return supportedLanguagesSorted.any { it.ietfLanguageTag == ietfLanguageTag }
         }
 
@@ -535,7 +583,11 @@ class L {
 
         }
 
-        data class DeviceLanguageWantedInfo(val ietfLanguageTag: String, val displayLanguage: String)
+        data class DeviceLanguageWantedInfo(
+            val ietfLanguageTag: String,
+            val displayLanguage: String
+        )
+
         /**
          * Given a list of language codes supported by the device, this function returns the first supported language by the App.
          * Reason for creating this was as follows:
@@ -551,14 +603,65 @@ class L {
             var ietfLanguageTag = ""
             var localeInConsideration: Locale
             for (i in 0 until deviceSystemLocales.size()) {
-                localeInConsideration = deviceSystemLocales.get(i) ?: return null // This shouldn't be null but just in case the unforeseen happens
+                localeInConsideration = deviceSystemLocales.get(i)
+                    ?: return null // This shouldn't be null but just in case the unforeseen happens
                 ietfLanguageTag = localeInConsideration.toLanguageTag().substringBefore("-")
                 if (isLanguageSupportedByApp(ietfLanguageTag)) {
-                    val displayLanguage = localeInConsideration.getDisplayLanguage(Locale(currentLanguage))  // Otherwise, the device language name doesn't appear in the correct translation.
+                    val displayLanguage =
+                        localeInConsideration.getDisplayLanguage(Locale(currentLanguage))  // Otherwise, the device language name doesn't appear in the correct translation.
                     return DeviceLanguageWantedInfo(ietfLanguageTag, displayLanguage)
                 }
             }
             return null
+        }
+
+        /**
+         *
+         * @param pattern String pattern. e.g. "Only {0} days left for your birthday"
+         * @param args  arguments list passed to replace the place holders in the pattern. e.g. listOf(4)
+         * If the above examples string are passed, this should return the following:  Only 4 days left for your birthday
+         * This was created so that MessageFormat is only used inside this and it can be replaced easily if needed in the future.
+         */
+        fun getFormattedString(pattern: String, args: List<Any>): String {
+            try {
+                return MessageFormat(
+                    pattern,
+                    mainLocaleOfCurrentLanguage
+                ).format(args.toTypedArray())
+            } catch (e: Exception) {
+                Log.d(
+                    TAG,
+                    "MessageFormat exception for string $pattern. Exception message: ${e.message}"
+                )
+                return pattern // returning the same string passed without allowing the app to crash.
+            }
+        }
+
+        /**
+         * Sets a static field in this class to a Locale that best represents the language tag of the currently selected language
+         * Motivation for creating this:
+         * Imagine we want to display “Your birthday is in 4 days” using L.t(Your birthday is in {0} days", days)
+         * In a certain Arabic Locale, it could get displayed as “Your birthday is in ٢ days” as MessageFormat which is used under the bonnet used the default locale of the user's device.
+         * In another place in the code, as the above scenario was unforeseen, the app was crashing as well.
+         * Therefore, we now find the main locale of the current language so that MessageFormat can be given an appropriate Locale without being at the mercy of the user's device locale.
+         */
+        private fun findAndStoreMainLocaleForCurrentLanguage() {
+            mainLocaleOfCurrentLanguage =
+                if (currentLanguage.lowercase(Locale.US) == "blank")
+                    Locale.US
+                else
+                    Locale.forLanguageTag(currentLanguage) // Using this method rather than using hard coded language and country names(e.g. de_DE) to make it easier to maintain when new languages are added.
+            Log.d(
+                TAG,
+                "Language has changed. Current language code = $currentLanguage, Current Locale language tag= ${mainLocaleOfCurrentLanguage.toLanguageTag()}"
+            )
+        }
+
+        /**
+         * This was added to expose a private field so that some tests could be written.
+         */
+        internal fun getLookupDictionary(): HashMap<String, ResourceContext>  {
+            return lookupDictionary
         }
 
     }
