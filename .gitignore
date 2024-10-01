@@ -1,1 +1,3 @@
 /build
+# Ignore all .mo files to prevent them from being accidentally committed as this a public repository.
+*.mo
