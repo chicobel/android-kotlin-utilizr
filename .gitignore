@@ -1,4 +1,3 @@
 /build
 # Ignore all .mo files to prevent them from being accidentally committed as this a public repository.
 *.mo
-# Test line added to see if git commits are working after some house keeping work. To be deleted. 1 Oct 2024
