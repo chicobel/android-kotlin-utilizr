@@ -51,6 +51,6 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.0")
     androidTestImplementation("androidx.test:runner:1.6.1") // Newly added in July 2024
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("org.hamcrest:hamcrest:3.0")
 }
