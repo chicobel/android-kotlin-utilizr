@@ -1,5 +1,6 @@
 package com.protectednet.utilizr.GetText
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -336,8 +337,13 @@ class L {
             }
         }
 
-        /** Had to add the annotation in order to access this method from a Java file.
-         * [See](https://www.baeldung.com/kotlin/companion-objects-in-java) */
+
+        /**
+         * Used for translating strings/text passed in along with placeholder arguments to the currently set language.
+         * Returns the text translated to the currently set language
+        */
+        // Had to add the annotation in order to access this method from a Java file.
+        //[See](https://www.baeldung.com/kotlin/companion-objects-in-java)
         @JvmStatic
         fun t(text: String, vararg args: Any): String {
             var res: String
@@ -361,6 +367,12 @@ class L {
             return res
         }
 
+        /**
+         * Used for translating strings/text passed in along with a list of placeholders to the currently set language.
+         * @param text - The text to be translated, can contain placeholders like "Hi {0}" used as L.t("Hi {0}","John") = "Salut John"
+         * @param args - The placeholder values
+         * @return the text translated to the currently set language.
+         */
         fun t(text: String, args: List<Any>): String {
             var res: String
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
@@ -383,6 +395,9 @@ class L {
             return res
         }
 
+        /**
+         Used for plural translations, takes the text for singular, plural and n for number of items, used in deciding if singular or plural, along with any placeholder arguments.
+        */
         fun p(textSingular: String, textPlural: String, n: Int, vararg args: Any): String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
@@ -410,6 +425,9 @@ class L {
             return res
         }
 
+        /**
+        Used for plural translations, takes the text for singular, plural and n for number of items, used in deciding if singular or plural, along with a list of placeholder arguments.
+         */
         fun p(textSingular: String, textPlural: String, n: Int, args: List<Any>): String {
             var res: String
             if (lookupDictionary.containsKey(currentLanguage)) {
@@ -437,10 +455,18 @@ class L {
             return res
         }
 
+        /**
+        * Used for translation situations where we want to defer reading the value of passed in placeholder arguments until the instant the string is ready to be displayed.
+        * @return an ITranslatable object with the translation.
+        */
         fun i(text: String, args: () -> LArgsInfo? = { null }): ITranslatable {
             return MS(text, args)
         }
 
+        /**
+        * Used for plural translation situations where we want to defer reading the value of passed in placeholder arguments until the instant the string is ready to be displayed.
+        * @return an ITranslatable object with the translation.
+        */
         fun ip(
             textSingular: String,
             textPlural: String,
@@ -598,6 +624,7 @@ class L {
          * @param deviceSystemLocales list of locales supported by the device obtained by calling LocaleManagerCompat.getSystemLocales(AvApplication.instance!!.applicationContext)
          * @return ietf language tag and display language of first matching language wrapped in a data class or null if not a single device language is supported by the App.
          */
+        @SuppressLint("ObsoleteSdkInt")
         @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
         fun getInfoOf1stDeviceLangSupportedByApp(deviceSystemLocales: LocaleListCompat): DeviceLanguageWantedInfo? {
             var ietfLanguageTag = ""
