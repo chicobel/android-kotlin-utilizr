@@ -1,6 +1,5 @@
 package com.protectednet.utilizr
 
-import android.content.Context
 import android.os.Build
 import android.text.Html
 import android.text.SpannableString
@@ -8,10 +7,7 @@ import android.text.Spanned
 import android.util.Log
 import java.io.File
 import java.net.NetworkInterface
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.*
+import java.util.Scanner
 import kotlin.math.floor
 
 class Utils {
