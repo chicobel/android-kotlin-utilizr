@@ -5,8 +5,17 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
@@ -17,12 +26,16 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.view.View.MeasureSpec.*
+import android.view.View.MeasureSpec.EXACTLY
+import android.view.View.MeasureSpec.UNSPECIFIED
+import android.view.View.MeasureSpec.makeMeasureSpec
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.Transformation
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.annotation.AnimRes
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import java.math.BigInteger
@@ -30,7 +43,9 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 fun Fragment.hideKeyboard() {
     view?.let { activity?.hideKeyboard(it) }
@@ -148,6 +163,39 @@ fun Context.openUrlInBrowser(url:String) {
     }catch (activityNotFoundException : ActivityNotFoundException){
         Log.d("OpenUrlWebView", "Unable to open url ${activityNotFoundException.message}")
     }
+}
+
+fun Context.openUrlInApp(
+    url: String,
+    iconResources: Bitmap?,
+    @AnimRes startAnimEnterResId: Int,
+    @AnimRes startAnimExitResId: Int,
+    @AnimRes exitAnimEnterResId: Int = android.R.anim.slide_in_left,
+    @AnimRes exitAnimExitResId: Int = android.R.anim.slide_out_right
+) {
+
+    val customTabsIntent = CustomTabsIntent.Builder()
+        .setShowTitle(true)
+        .setUrlBarHidingEnabled(true)
+        .setCloseButtonIcon(iconResources ?: return)
+        .setStartAnimations(this, startAnimEnterResId, startAnimExitResId)
+        .setExitAnimations(this, exitAnimEnterResId, exitAnimExitResId)
+        .build()
+
+    // Launch the URL
+    customTabsIntent.intent.setPackage(getDefaultBrowserPackageName())
+    customTabsIntent.launchUrl(this, Uri.parse(url))
+}
+
+fun Context.getDefaultBrowserPackageName(): String? {
+    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))
+    val flags = PackageManager.MATCH_DEFAULT_ONLY.toLong()
+    val resolveInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        packageManager.resolveActivity(browserIntent, PackageManager.ResolveInfoFlags.of(flags))
+    } else {
+        packageManager.resolveActivity(browserIntent, flags.toInt())
+    }
+    return resolveInfo?.activityInfo?.packageName
 }
 
 fun Resources.decodeSampledBitmapFromResource(
