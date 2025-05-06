@@ -152,17 +152,6 @@ fun Bitmap.toGrayScale():Bitmap{
     return bmpGrayscale
 }
 
-fun Context.openUrlInBrowser(url:String) {
-    try {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        if (this !is Activity)
-            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        ContextCompat.startActivity(this,browserIntent,null)
-    }catch (activityNotFoundException : ActivityNotFoundException){
-        Log.d("OpenUrlWebView", "Unable to open url ${activityNotFoundException.message}")
-    }
-}
-
 fun Resources.decodeSampledBitmapFromResource(
     resId: Int,
     reqWidth: Int,
