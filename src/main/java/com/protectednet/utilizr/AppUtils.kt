@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import androidx.browser.customtabs.CustomTabsService
+import com.protectednet.utilizr.UrlUtil.openMarketUrl
 
 /**
  * Represents some basic application info
@@ -39,7 +40,7 @@ val ApplicationInfo.isSystemApp: Boolean
 val BasicApplicationInfo.isSystemApp: Boolean
     get() = appInfo.isSystemApp
 
-object PackageUtil {
+object AppUtils {
 
     /**
      * Returns a list of all launchable apps - apps that have [Intent.ACTION_MAIN] and [Intent.CATEGORY_LAUNCHER]
@@ -183,5 +184,25 @@ object PackageUtil {
             }
         }
         return pckgsSupportingCustomTabs
+    }
+
+    fun isAppInstalled(context: Context, packageName: String?): Boolean {
+        return try {
+            context.packageManager.getPackageInfo(packageName!!, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    fun openAppOrPlayStore(context: Context, packageName: String) {
+        val intent =
+            context.packageManager.getLaunchIntentForPackage(packageName)
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } else {
+            openMarketUrl(context, packageName)
+        }
     }
 }
