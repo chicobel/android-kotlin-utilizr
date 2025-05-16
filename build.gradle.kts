@@ -8,11 +8,10 @@ plugins {
 android {
     namespace = "com.protectednet.utilizr"
 
-    compileSdk = 33
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 34
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles(file("consumer-rules.pro"))
@@ -49,7 +48,7 @@ dependencies {
     api("io.reactivex.rxjava2:rxkotlin:2.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.0")
-    implementation(androidx.browser)
+    implementation("androidx.browser:browser:1.8.0")
     androidTestImplementation("androidx.test:runner:1.6.1") // Newly added in July 2024
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     testImplementation("androidx.test.ext:junit:1.2.1")
