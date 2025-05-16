@@ -8,11 +8,10 @@ plugins {
 android {
     namespace = "com.protectednet.utilizr"
 
-    compileSdk = 33
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 34
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles(file("consumer-rules.pro"))
