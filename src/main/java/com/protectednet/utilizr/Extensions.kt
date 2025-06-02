@@ -152,52 +152,6 @@ fun Bitmap.toGrayScale():Bitmap{
     return bmpGrayscale
 }
 
-
-
-fun Context.openUrlInBrowser(url:String) {
-    try {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        if (this !is Activity)
-            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        ContextCompat.startActivity(this,browserIntent,null)
-    }catch (activityNotFoundException : ActivityNotFoundException){
-        Log.d("OpenUrlWebView", "Unable to open url ${activityNotFoundException.message}")
-    }
-}
-
-fun Context.openUrlInApp(
-    url: String,
-    iconResources: Bitmap?,
-    @AnimRes startAnimEnterResId: Int,
-    @AnimRes startAnimExitResId: Int,
-    @AnimRes exitAnimEnterResId: Int = android.R.anim.slide_in_left,
-    @AnimRes exitAnimExitResId: Int = android.R.anim.slide_out_right
-) {
-
-    val customTabsIntent = CustomTabsIntent.Builder()
-        .setShowTitle(true)
-        .setUrlBarHidingEnabled(true)
-        .setCloseButtonIcon(iconResources ?: return)
-        .setStartAnimations(this, startAnimEnterResId, startAnimExitResId)
-        .setExitAnimations(this, exitAnimEnterResId, exitAnimExitResId)
-        .build()
-
-    // Launch the URL
-    customTabsIntent.intent.setPackage(getDefaultBrowserPackageName())
-    customTabsIntent.launchUrl(this, Uri.parse(url))
-}
-
-fun Context.getDefaultBrowserPackageName(): String? {
-    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))
-    val flags = PackageManager.MATCH_DEFAULT_ONLY.toLong()
-    val resolveInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        packageManager.resolveActivity(browserIntent, PackageManager.ResolveInfoFlags.of(flags))
-    } else {
-        packageManager.resolveActivity(browserIntent, flags.toInt())
-    }
-    return resolveInfo?.activityInfo?.packageName
-}
-
 fun Resources.decodeSampledBitmapFromResource(
     resId: Int,
     reqWidth: Int,
