@@ -65,6 +65,7 @@ object AppUtils {
             .filter { it.activityInfo.packageName != context.applicationContext.packageName } // don't include our app
             .distinctBy { it.activityInfo.packageName } // 1 app can have many activities, so only include unique apps
             .mapNotNull { packageManager.resolveAppInfo(it.activityInfo.packageName) }
+            .filter { (it.appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } // Filter out system apps
             .sortedBy { it.displayName }
             .toList()
     }
