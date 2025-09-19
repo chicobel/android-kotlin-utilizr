@@ -53,7 +53,7 @@ dependencies {
     api("io.reactivex.rxjava2:rxkotlin:2.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
-    implementation("androidx.browser:browser:1.9.0")
+    implementation("androidx.browser:browser:1.8.0")
     androidTestImplementation("androidx.test:runner:1.7.0") // Newly added in July 2024
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     testImplementation("androidx.test.ext:junit:1.3.0")
