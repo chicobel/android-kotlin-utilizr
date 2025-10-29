@@ -9,8 +9,11 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.util.Base64
+import android.util.Log
 import androidx.browser.customtabs.CustomTabsService
 import com.protectednet.utilizr.UrlUtil.openMarketUrl
+import java.security.MessageDigest
 
 /**
  * Represents some basic application info
@@ -206,4 +209,38 @@ object AppUtils {
             openMarketUrl(context, packageName)
         }
     }
+
+
+    fun getAppSignersFingerprint(context: Context,algorithm: String = "SHA-256"): List<String> {
+        val packageName = context.packageName
+        val packageManager = context.applicationContext.packageManager
+
+        val pkgInfo = packageManager.getPackageInfo(
+            packageName,
+            PackageManager.GET_SIGNING_CERTIFICATES
+        )
+
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            pkgInfo.signingInfo?.apkContentsSigners
+        } else {
+            @Suppress("DEPRECATION")
+            pkgInfo.signatures
+        }
+        val mutableList = mutableListOf<String>()
+        // Loop through each signature and compute fingerprint
+        if (signatures != null) {
+            for (sig in signatures) {
+                val digest = MessageDigest.getInstance(algorithm)
+                val hashBytes = digest.digest(sig.toByteArray())
+                // Convert to Base64
+                val base64Fingerprint = Base64.encodeToString(hashBytes, Base64.NO_WRAP)
+
+                Log.i("AppFingerprint", "$algorithm (Base64): $base64Fingerprint")
+                mutableList.add(base64Fingerprint)
+            }
+        }
+
+        return mutableList
+    }
+
 }
