@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import java.lang.reflect.Type
 
 /**
  * App-level events that can be triggered from anywhere.
@@ -14,6 +15,11 @@ sealed interface AppEvent {
      * Event to show the paywall sheet
      */
     object ShowPaywall : AppEvent
+    
+    /**
+     * Fired when account info changes, usually from API responses or background syncs.
+     */
+    data class AccountUpdated(val requestType: Type, val isLicensed:Boolean) : AppEvent
 }
 
 object AppEvents {
@@ -25,8 +31,8 @@ object AppEvents {
     val appEvents: SharedFlow<AppEvent> = _appEvents.asSharedFlow()
     
     /**
-     * Publish an app event (non-suspending - never blocks).
-     * Returns true if event was successfully emitted, false if dropped.
+     * Publishes an app event. Non-blocking, so safe to call from any thread.
+     * Returns true if the event was emitted successfully, false if it was dropped.
      */
     fun publish(event: AppEvent): Boolean {
         return _appEvents.tryEmit(event)
