@@ -15,7 +15,12 @@ sealed interface AppEvent {
      * Event to show the paywall sheet
      */
     object ShowPaywall : AppEvent
-    
+
+    /**
+     * Event when the user logs out, to clear session data and reset UI
+     */
+    object Logout: AppEvent
+
     /**
      * Fired when account info changes, usually from API responses or background syncs.
      */
