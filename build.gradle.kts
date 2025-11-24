@@ -54,6 +54,12 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
     androidTestImplementation("androidx.test:runner:1.7.0") // Newly added in July 2024
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     testImplementation("androidx.test.ext:junit:1.3.0")
