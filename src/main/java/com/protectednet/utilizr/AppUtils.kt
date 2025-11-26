@@ -50,9 +50,10 @@ object AppUtils {
      *
      * The list will not include the current app that [context] is a part of
      */
-    fun getLaunchableApps(context: Context): List<BasicApplicationInfo> {
+    fun getLaunchableApps(context: Context, excludeSystemApps: Boolean = true): List<BasicApplicationInfo> {
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
+//        intent.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
 
         val packageManager = context.applicationContext.packageManager
 
@@ -64,11 +65,13 @@ object AppUtils {
 
         return allApps
             .asSequence() // use a sequence to improve performance as there could be a very large number of activities
-            .filter { it.activityInfo != null } // not launchable
-            .filter { it.activityInfo.packageName != context.applicationContext.packageName } // don't include our app
-            .distinctBy { it.activityInfo.packageName } // 1 app can have many activities, so only include unique apps
-            .mapNotNull { packageManager.resolveAppInfo(it.activityInfo.packageName) }
-            .filter { (it.appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } // Filter out system apps
+            .mapNotNull { it.activityInfo } // not launchable
+            .filter { it.packageName != context.applicationContext.packageName } // don't include our app
+            .distinctBy { it.packageName } // 1 app can have many activities, so only include unique apps
+            .mapNotNull { packageManager.resolveAppInfo(it.packageName) }
+            .filterIf(excludeSystemApps) {
+                filter { it.appInfo.isSystemApp.not() }
+            }
             .sortedBy { it.displayName }
             .toList()
     }

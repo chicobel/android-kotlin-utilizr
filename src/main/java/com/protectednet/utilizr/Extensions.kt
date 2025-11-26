@@ -47,6 +47,12 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+inline fun <T> Sequence<T>.filterIf(
+    condition: Boolean,
+    block: Sequence<T>.() -> Sequence<T>
+): Sequence<T> = if (condition) block() else this
+
+
 fun Fragment.hideKeyboard() {
     view?.let { activity?.hideKeyboard(it) }
 }
