@@ -28,7 +28,7 @@ open class ResourceContext(
             }
         }
         if (BuildConfig.DEBUG)
-            Log.d("ResourceContext", "[no translation for string] [{s}]")
+            Log.d("ResourceContext", "[no translation for string] [{$s}]")
 
         return s
     }
