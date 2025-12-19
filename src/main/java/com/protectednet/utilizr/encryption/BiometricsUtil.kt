@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Base64
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -13,6 +15,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.fragment.app.FragmentActivity
+import com.protectednet.utilizr.GetText.L
+import com.protectednet.utilizr.encryption.BiometricsUtil.KEY_ALIAS
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.security.KeyStore
@@ -20,11 +24,12 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import android.util.Base64
 import kotlin.coroutines.resume
 
 object BiometricsUtil {
 
+    private const val TAG = "BiometricsUtil"
+    
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
     private const val KEY_ALIAS = "biometric_master_key"
 
@@ -113,6 +118,7 @@ object BiometricsUtil {
 
     /**
      * Authenticates the user with biometric prompt and returns the authenticated cipher
+     * @return Cipher if authentication succeeded, null if cancelled or failed
      */
     private suspend fun authenticateCipher(
         activity: FragmentActivity,
@@ -123,7 +129,7 @@ object BiometricsUtil {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setSubtitle(subtitle)
-            .setNegativeButtonText("Cancel")
+            .setNegativeButtonText(L.t("Cancel"))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
 
@@ -135,12 +141,53 @@ object BiometricsUtil {
             object : BiometricPrompt.AuthenticationCallback() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val authenticatedCipher = result.cryptoObject?.cipher
-                    cont.resume(authenticatedCipher)
+                    if (!cont.isActive) return
+                    cont.resume(result.cryptoObject?.cipher)
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    if (cont.isActive) cont.resume(null)
+                    if (!cont.isActive) return
+                    
+                    when (errorCode) {
+                        BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                        BiometricPrompt.ERROR_USER_CANCELED -> {
+                            // User cancellation, no action needed
+                        }
+                        
+                        BiometricPrompt.ERROR_NO_BIOMETRICS -> {
+                            Log.w(TAG, "No biometrics enrolled: $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_HW_UNAVAILABLE -> {
+                            Log.w(TAG, "Biometric hardware unavailable: $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_LOCKOUT -> {
+                            Log.w(TAG, "Biometric lockout (temporary): $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> {
+                            Log.e(TAG, "Biometric lockout (permanent): $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_HW_NOT_PRESENT -> {
+                            Log.w(TAG, "No biometric hardware present: $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_UNABLE_TO_PROCESS -> {
+                            Log.w(TAG, "Unable to process biometric: $errString")
+                        }
+                        
+                        BiometricPrompt.ERROR_CANCELED -> {
+                            Log.d(TAG, "Biometric authentication canceled by system: $errString")
+                        }
+                        
+                        else -> {
+                            Log.w(TAG, "Biometric authentication error: code=$errorCode, message=$errString")
+                        }
+                    }
+                    
+                    cont.resume(null)
                 }
 
                 override fun onAuthenticationFailed() {
@@ -185,8 +232,14 @@ object BiometricsUtil {
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setUserAuthenticationRequired(true)
-            //uncomment if desired, not sure you'd would want to bug users
-//            .setInvalidatedByBiometricEnrollment(true)
+            // TODO: decide whether or not to enroll this settings?
+//            .apply {
+//                // Invalidate key if biometrics are changed, user will need to re-setup
+//                // This is more secure and prevents issues with changed biometrics
+//                // Ref from 1Password: https://support.1password.com/android-biometric-unlock-security/
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+//                    setInvalidatedByBiometricEnrollment(true)
+//            }
             .build()
 
         generator.init(spec)
