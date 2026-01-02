@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.browser.customtabs.CustomTabsService
 import com.protectednet.utilizr.UrlUtil.openMarketUrl
 import java.security.MessageDigest
+import androidx.core.net.toUri
 
 /**
  * Represents some basic application info
@@ -138,7 +139,7 @@ object AppUtils {
     }
 
     fun getDefaultBrowserPackageName(context: Context): String? {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"))
+        val browserIntent = Intent(Intent.ACTION_VIEW, "https://www.google.com".toUri())
         val flags = PackageManager.MATCH_DEFAULT_ONLY.toLong()
         val resolveInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.packageManager.resolveActivity(browserIntent, PackageManager.ResolveInfoFlags.of(flags))
