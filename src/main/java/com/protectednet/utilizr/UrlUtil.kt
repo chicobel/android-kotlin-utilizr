@@ -16,6 +16,7 @@ import androidx.annotation.AnimRes
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.protectednet.utilizr.AppUtils.getDefaultBrowserPackageName
 import java.net.URI
 
@@ -42,7 +43,7 @@ object UrlUtil {
     ) {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse(url)
+                data = url.toUri()
             }
 
             context.startActivity(
@@ -98,6 +99,7 @@ object UrlUtil {
 
     /**
      * Opens a URL in a custom tab with animations.
+     * Falls back to standard browser if Custom Tabs are not available.
      * @param context The context to use for starting the activity
      * @param url The URL to open
      * @param iconResources The icon to use for the close button
@@ -115,16 +117,33 @@ object UrlUtil {
         @AnimRes exitAnimEnterResId: Int = android.R.anim.slide_in_left,
         @AnimRes exitAnimExitResId: Int = android.R.anim.slide_out_right
     ) {
-        val customTabsIntent = CustomTabsIntent.Builder()
-            .setShowTitle(true)
-            .setUrlBarHidingEnabled(true)
-            .setCloseButtonIcon(iconResources ?: return)
-            .setStartAnimations(context, startAnimEnterResId, startAnimExitResId)
-            .setExitAnimations(context, exitAnimEnterResId, exitAnimExitResId)
-            .build()
+        try {
+            val builder = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setUrlBarHidingEnabled(true)
+                .setStartAnimations(context, startAnimEnterResId, startAnimExitResId)
+                .setExitAnimations(context, exitAnimEnterResId, exitAnimExitResId)
 
-        customTabsIntent.intent.setPackage(getDefaultBrowserPackageName(context))
-        customTabsIntent.launchUrl(context, Uri.parse(url))
+            // Use custom icon if provided, otherwise use default
+            iconResources?.let { builder.setCloseButtonIcon(it) }
+
+            val customTabsIntent = builder.build()
+
+            val packageName = getDefaultBrowserPackageName(context)
+            if (packageName != null) {
+                customTabsIntent.intent.setPackage(packageName)
+            }
+
+            customTabsIntent.launchUrl(context, url.toUri())
+        } catch (e: ActivityNotFoundException) {
+            // Custom Tabs not available, fallback to standard browser
+            Log.d(TAG, "Custom Tabs not available, falling back to standard browser: ${e.message}")
+            openUrlInBrowser(context, url)
+        } catch (e: Exception) {
+            // Any other error, fallback to standard browser
+            Log.e(TAG, "Error opening Custom Tab, falling back to standard browser: ${e.message}", e)
+            openUrlInBrowser(context, url)
+        }
     }
 
     /**
@@ -137,7 +156,7 @@ object UrlUtil {
         try {
             context.startActivity(
                 Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("market://details?id=$packageName")
+                    data = "market://details?id=$packageName".toUri()
                 }
             )
         } catch (e: ActivityNotFoundException) {
@@ -199,7 +218,7 @@ object UrlUtil {
 
             // Find the sanitised URL with the query parameters sorted in ascending order alphabetically. Also remove http://, https:// and www from the url.
             // TODO this method expects an encoded string but is being given an unencoded one
-            val url = Uri.parse(str)
+            val url = str.toUri()
             val queries = url.queryParameterNames.sorted()
             var sortedQueries = ""
             if (queries.isNotEmpty()) {
