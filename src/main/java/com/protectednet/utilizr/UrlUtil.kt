@@ -18,6 +18,7 @@ import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
 import com.protectednet.utilizr.AppUtils.getDefaultBrowserPackageName
 import java.net.URI
+import androidx.core.net.toUri
 
 /**
  * Utility class for handling URLs and web-related operations.
@@ -87,7 +88,7 @@ object UrlUtil {
      */
     fun openUrlInBrowser(context: Context, url: String) {
         try {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
             if (context !is Activity)
                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             ContextCompat.startActivity(context, browserIntent, null)
