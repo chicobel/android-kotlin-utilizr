@@ -9,6 +9,8 @@ import com.protectednet.utilizr.BuildConfig
 import com.protectednet.utilizr.GetText.Localization.DummyResourceContext
 import com.protectednet.utilizr.GetText.Localization.ResourceContext
 import com.protectednet.utilizr.eventBus.RxBus
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.*
 import kotlin.collections.HashMap
 import java.text.MessageFormat
@@ -111,6 +113,14 @@ class L {
         private var indexedMoFiles: Boolean = false
         private val debugLanguage: SupportedLanguage = SupportedLanguage("Blank", "*****", "blank")
         var currentLanguage: String = "en"
+
+
+        private val _currentlySetLanguageCode = MutableStateFlow(currentLanguage)
+        /**
+         * This can be used to update the UI when the language changes. This can also be used to get the code of the currently set language.
+         * Suffixed with Flow to differentiate this with an existing variable name with this name
+         */
+        val currentlySetLanguageCode = _currentlySetLanguageCode.asStateFlow()
 
         /**
          * Locale assumed based on the currently selected language.
@@ -496,6 +506,7 @@ class L {
             if (changed) {
                 raiseLocaleChangedEvent()
                 findAndStoreMainLocaleForCurrentLanguage() // As we are in the class that the language change is made itself, not using a RxBus subscription unnecessarily to do this
+                _currentlySetLanguageCode.value = currentLanguage
             }
         }
 
