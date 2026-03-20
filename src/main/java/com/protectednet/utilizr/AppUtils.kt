@@ -215,7 +215,7 @@ object AppUtils {
     }
 
 
-    fun getAppSignersFingerprint(context: Context,algorithm: String = "SHA-256"): List<String> {
+    fun getAppSignersFingerprint(context: Context,algorithm: String = "SHA-256", outputHex: Boolean = true): List<String> {
         val packageName = context.packageName
         val packageManager = context.applicationContext.packageManager
 
@@ -236,11 +236,18 @@ object AppUtils {
             for (sig in signatures) {
                 val digest = MessageDigest.getInstance(algorithm)
                 val hashBytes = digest.digest(sig.toByteArray())
-                // Convert to Base64
-                val base64Fingerprint = Base64.encodeToString(hashBytes, Base64.NO_WRAP)
-
-                Log.i("AppFingerprint", "$algorithm (Base64): $base64Fingerprint")
-                mutableList.add(base64Fingerprint)
+                if(outputHex) {
+                    val hexFingerprint = hashBytes.joinToString(":") { byte ->
+                        "%02X".format(byte)
+                    }
+                    Log.i("AppFingerprint", "$algorithm (Base64): $hexFingerprint")
+                    mutableList.add(hexFingerprint)
+                } else {
+                    // Convert to Base64
+                    val base64Fingerprint = Base64.encodeToString(hashBytes, Base64.NO_WRAP)
+                    Log.i("AppFingerprint", "$algorithm (Base64): $base64Fingerprint")
+                    mutableList.add(base64Fingerprint)
+                }
             }
         }
 
