@@ -2,9 +2,12 @@ package com.protectednet.utilizr
 
 import android.graphics.*
 import android.graphics.drawable.InsetDrawable
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 
+@RequiresApi(Build.VERSION_CODES.M)
 fun RecyclerView.addItemSpacing(sides:Double=0.0, vertical:Double=10.0){
     val ATTRS = intArrayOf(android.R.attr.listDivider)
     val a = context!!.obtainStyledAttributes(ATTRS)
