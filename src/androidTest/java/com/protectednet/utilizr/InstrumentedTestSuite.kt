@@ -90,7 +90,7 @@ class InstrumentedLanguageTestsNormal {
     fun t_englishTextWithNoPlaceholders_germanResult() {
         L.setLanguage("de")
         val expected = "Ihr Konto wird aktualisiert, bitte erlauben Sie bis zu 30 Min."
-        val actual = L.t("Your Account is being upgraded, please allow up to 30 minutes")
+        val actual = L.t("This will be available in a few minutes")
         assertThat(actual, Matchers.equalTo(expected))
     }
 
