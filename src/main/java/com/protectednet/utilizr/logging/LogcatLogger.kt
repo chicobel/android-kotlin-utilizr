@@ -17,6 +17,7 @@ object LogcatLogger {
 
     /*How often logcat should dump to file*/
     var isLogging = false
+    private val logsTimer = Timer("logsTimer")
     lateinit var logDirectory: File
     private var process: Process? = null
     private var logFile: File? = null
@@ -61,6 +62,16 @@ object LogcatLogger {
         logFile = File(logDirectory.absolutePath, "logcat$date.txt")
     }
 
+    fun monitorLogs() {
+        val period = if (BuildConfig.DEBUG) 1000 * 60 * 1 else 1000 * 60 * 60 * 2L
+        logsTimer.schedule(object : TimerTask() {
+            override fun run() {
+                stop()
+                flushLogs()
+                start()
+            }
+        }, Date(System.currentTimeMillis()), period)
+    }
 
     /**
     This method should be called at intervals in-case the logs are heavy and taking up space.
@@ -88,7 +99,8 @@ object LogcatLogger {
             }
     }
 
-    fun start() {
+    private fun start() {
+        if(BuildConfig.DEBUG) Log.d(TAG, "Starting logcat logging..")
         setLogFileName()
         // clear the previous logcat and then write the new one to the file
         try {
@@ -112,5 +124,7 @@ object LogcatLogger {
         process?.destroy()
         process = null
     }
+
+
 
 }
