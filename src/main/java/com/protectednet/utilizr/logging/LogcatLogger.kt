@@ -54,6 +54,7 @@ object LogcatLogger {
         setLogFileName()
         flushLogs()
         monitorLogs()
+        start()
     }
 
     private fun setLogFileName(){
@@ -67,9 +68,7 @@ object LogcatLogger {
         val period = if (BuildConfig.DEBUG) 1000 * 60 * 1 else 1000 * 60 * 60 * 2L
         logsTimer.schedule(object : TimerTask() {
             override fun run() {
-                stop()
                 flushLogs()
-                start()
             }
         }, Date(System.currentTimeMillis()), period)
     }
