@@ -78,6 +78,30 @@ object AppUtils {
     }
 
     /**
+     * Returns launcher activity entries for installed apps, excluding the host application.
+     *
+     * Each [ResolveInfo] retains the resolved activity or activity-alias, including its label and icon.
+     * Callers that show one row per package should deduplicate by `activityInfo.packageName`.
+     */
+    fun getLauncherActivities(context: Context): List<ResolveInfo> {
+        val applicationContext = context.applicationContext
+        val packageManager = applicationContext.packageManager
+        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+
+        val resolvedActivities = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.queryIntentActivities(
+                launcherIntent,
+                PackageManager.ResolveInfoFlags.of(0),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.queryIntentActivities(launcherIntent, 0)
+        }
+
+        return resolvedActivities.filter { it.activityInfo?.packageName != applicationContext.packageName }
+    }
+
+    /**
      * Resolves an app's info from its package name
      *
      * If the package is not found, this will return null rather than throwing a [NameNotFoundException][PackageManager.NameNotFoundException]
