@@ -360,6 +360,9 @@ class L {
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
                     res = lookupDictionary[currentLanguage]!!.lookupString(text)
+                    if (res.isBlank()) {
+                        res = text
+                    }
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
@@ -388,6 +391,9 @@ class L {
             if (currentLanguage.isNotEmpty() && lookupDictionary.containsKey(currentLanguage)) {
                 if (lookupDictionary[currentLanguage] != null) {
                     res = lookupDictionary[currentLanguage]!!.lookupString(text)
+                    if (res.isBlank()) {
+                        res = text
+                    }
                     if (args.isNotEmpty()) {
                         if (res.contains("'"))
                             res = res.replace(Regex("(?<!')'(?!')"), "''")
